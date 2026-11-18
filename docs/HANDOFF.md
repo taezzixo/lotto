@@ -20,6 +20,7 @@
 - 테스트: 계산 로직 19개(`node --test`) + 수집·데이터 13개(`unittest`) 통과, 빌드 성공(메인 JS gzip 68KB, jsQR 47KB 지연 로드)
 - 화면 확인: Playwright 390px 라이트·다크, 1280px. 가로 넘침·콘솔 오류 없음. 사진 QR → 1등 판정, 중복 방지, 잘못된 링크 오류, 직접 입력 → 추첨 대기, 되돌리기 흐름 확인
 - 브랜치: 현재 원격 기본 브랜치가 작업 브랜치 `claude/jolly-euler-ekd2jv`(저장소 첫 푸시라서). `main` 없음
+- 미리보기(비공개): https://claude.ai/artifact/HxdZ3CDJW2QZRix1LBn2Bv — 미리보기에서는 카메라와 파일 내려받기(.ics·기록 백업)가 막혀 있음. 사진에서 QR 읽기·직접 입력은 동작
 
 ## 결정된 사항
 
