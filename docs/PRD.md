@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 | :--- | :--- |
-| 문서 버전 | **v2.1** (v2.0 + 1~1,250회 데이터 구축 완료·수집 파이프라인 구현 반영) |
+| 문서 버전 | **v2.2** (v2.1 + MVP v0.1 구현 반영: 탭 구성·저장 방식·기술 스택 결정, 2026-11-18) |
 | 작성 기준일 | 2026년 11월 18일 (제1,250회 · 2026-11-14 추첨분까지 반영) |
 | 제품 형태 | 모바일 퍼스트 반응형 웹앱(PWA) + 서버리스 주간 데이터 수집 파이프라인 |
 | 핵심 한 줄 | **종이 로또의 QR을 찍으면 바로 채점되고, 내 기록이 자동으로 쌓여 “나의 적중률”을 재미있게 보여주는 무료·무가입 서비스** |
@@ -12,6 +12,12 @@
 ---
 
 ## 0. v1.0 대비 변경 요약
+
+> **v2.2 MVP 결정 (2026-11-18)** — 실제 구현은 아래를 따른다. 근거는 `docs/ARCHITECTURE.md` §0.
+> - 탭: 홈 / 통계 / **QR 채점** / **적중 기록**(분석 번호를 매주 실제 당첨번호와 대조한 기록 — Notion 아이디어 「분석한 번호와 실제 당첨번호를 대조해 매주 적중률 기록」) / 내 기록. 필터 번호 생성기(FR-13·14)는 Phase 3 유지
+> - 저장: IndexedDB 대신 **localStorage**(기본 구성도 v1과 동일, 기록이 작음) + JSON 내보내기·가져오기
+> - 기술: React 18 + Vite 5 + TypeScript, 런타임 의존성 `react`·`react-dom`·`jsqr`(iOS용 QR 판독, 스캔할 때만 로드). PWA 설치·Web Push는 v0.2 이후
+> - 배포: Cloudflare Workers 정적 자산(`wrangler.jsonc`), 워크플로 `.github/workflows/deploy.yml`(check + collect)
 
 | 구분 | v1.0 | v2.0 결정 | 이유 |
 | :--- | :--- | :--- | :--- |
@@ -39,7 +45,7 @@
 ## 2. 제품 원칙
 
 1. **모바일 퍼스트, 한 손 조작**: 핵심 동작(스캔)은 홈에서 탭 한 번으로 시작해 엄지 영역 안에서 끝난다.
-2. **무가입·로컬 우선**: 모든 개인 기록은 브라우저(IndexedDB)에만 저장한다. 서버로 번호를 전송하지 않는다.
+2. **무가입·로컬 우선**: 모든 개인 기록은 브라우저(localStorage, v2.2 결정)에만 저장한다. 서버로 번호를 전송하지 않는다.
 3. **자동이 기본**: 스캔하면 저장 버튼 없이 바로 저장되고(되돌리기 제공), 추첨 후 앱을 열면 바로 채점된다.
 4. **정직한 확률**: 모든 재미 지표는 이론 확률과 나란히 보여주고, “과거는 미래에 영향을 주지 않는다”를 함께 표기한다.
 5. **1등 데이터 집중**: 수집과 분석은 1등 지표에 한정해 파이프라인을 단순하게 유지한다.
@@ -74,7 +80,7 @@
 하단 탭 바 5칸이며, 가운데 스캔 버튼을 가장 크게 둔다.
 
 ```
-[ 홈 ]  [ 통계 ]  [ ◉ 스캔 ]  [ 번호생성 ]  [ 내 기록 ]
+[ 홈 ]  [ 통계 ]  [ ◉ QR 채점 ]  [ 적중 기록 ]  [ 내 기록 ]      ← v2.2 MVP (번호생성은 Phase 3)
 ```
 
 | 화면 | 주요 구성 |
@@ -244,7 +250,7 @@ export function grade(nums: number[], draw: { nums: number[]; bonus: number }) {
 
 ## 8. 나의 기록 & 나의 적중률
 
-### 8.1 로컬 데이터 모델 (IndexedDB, Dexie)
+### 8.1 로컬 데이터 모델 (v2.2: localStorage `lotto-lab:tickets:v1`, 채점 결과는 저장하지 않고 열 때마다 계산)
 
 | 스토어 | 주요 필드 | 비고 |
 | :--- | :--- | :--- |
@@ -410,7 +416,7 @@ stateDiagram-v2
 
 ### 9.7 GitHub Actions 워크플로
 
-구현 파일: [`.github/workflows/update_lotto_data.yml`](../.github/workflows/update_lotto_data.yml)
+구현 파일: [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)
 
 | 스텝 | 조건 | 내용 |
 | :--- | :--- | :--- |
@@ -572,7 +578,7 @@ stateDiagram-v2
 | :--- | :--- |
 | [`scripts/update_lotto.py`](../scripts/update_lotto.py) | ETL(표준 라이브러리만 사용): 공식 → 미러 다수결 폴백, 상태 전이, 시드 3곳 교차검증, SLA 판정 |
 | [`scripts/test_update_lotto.py`](../scripts/test_update_lotto.py) | 테스트 13개. 공식 확정·집계 대기·이월 확정·미러 다수결·동률 중단·단일 미러 잠정·시드→증분→SLA→복구 흐름, 저장 데이터 무결성(1회부터 연속, 알려진 회차, 외부 통계 일치) |
-| [`.github/workflows/update_lotto_data.yml`](../.github/workflows/update_lotto_data.yml) | 주간 스케줄 워크플로 |
+| [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) | 주간 스케줄 워크플로 |
 | [`public/data/draws.json`](../public/data/draws.json) | 1~1,250회 데이터 |
 
 ## 부록 D. 출처

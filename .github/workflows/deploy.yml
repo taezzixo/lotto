@@ -1,4 +1,4 @@
-name: Lotto 6/45 weekly ingestion
+name: 로또 데이터 수집·검사
 
 on:
   schedule:
@@ -11,22 +11,38 @@ on:
         description: '1회~최신 전체를 미러 3곳 교차검증으로 재구축'
         type: boolean
         default: false
+  push:
+    branches: [main]
   pull_request:
-    paths:
-      - 'scripts/**'
-      - 'public/data/**'
-      - '.github/workflows/update_lotto_data.yml'
 
 permissions:
   contents: write
   issues: write
 
 concurrency:
-  group: lotto-data-${{ github.ref }}
+  group: lotto-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
   cancel-in-progress: false
 
 jobs:
-  ingest:
+  check:
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - run: npm test            # 계산 로직(node --test) + 수집·데이터 무결성(unittest)
+      - run: npm run build
+
+  collect:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -36,34 +52,33 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Unit & data integrity tests
+      - name: 수집 전 테스트
         run: python -m unittest discover -s scripts -v
 
-      - name: Run ETL (stdlib only)
+      - name: 수집 (표준 라이브러리만 사용)
         id: etl
-        if: github.event_name != 'pull_request'
         env:
           LOTTO_OFFICIAL_BASE: ${{ secrets.LOTTO_OFFICIAL_BASE }}   # 비워두면 동행복권 직접 호출
         run: python scripts/update_lotto.py ${{ inputs.seed && '--seed' || '' }}
 
-      - name: Re-check data after update   # ETL이 SLA 실패(exit 1)여도 수집분 검증
+      - name: 수집 후 데이터 재검증   # SLA 실패(exit 1)여도 수집분은 검증
         id: recheck
         if: always() && steps.etl.outcome != 'skipped'
         run: python -m unittest discover -s scripts -k StoredDataTests
 
-      - name: Commit & push data   # 재검증을 통과한 데이터만 커밋
+      - name: 커밋·푸시 (재검증 통과한 데이터만)
         if: always() && steps.recheck.outcome == 'success'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/data
-          git diff --staged --quiet && exit 0
+          git diff --staged --quiet && echo "변경 없음" && exit 0
           latest=$(python -c "import json;print(json.load(open('public/data/latest.json'))['latest']['no'])")
-          git commit -m "chore(data): update lotto draws (${latest}회)"
+          git commit -m "data: 로또 제${latest}회 반영"
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push
 
-      - name: Open issue on failure
+      - name: 실패 알림 (이슈)
         if: failure() && github.event_name == 'schedule'
         env:
           GH_TOKEN: ${{ github.token }}

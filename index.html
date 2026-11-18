@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>로또랩 — QR 채점과 1등 데이터</title>
+    <meta name="description" content="종이 로또 QR을 찍으면 바로 채점하고, 내 기록과 적중률을 쌓아 주는 무료 서비스. 제1회부터 모든 당첨번호와 1등 데이터를 봅니다." />
+    <meta name="theme-color" content="#cf2f68" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=Gothic+A1:wght@400;500;700;800&display=swap" rel="stylesheet" />
+    <script>
+      try {
+        var t = localStorage.getItem('lotto-lab:theme');
+        if (t) document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
