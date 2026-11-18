@@ -1,0 +1,76 @@
+name: Lotto 6/45 weekly ingestion
+
+on:
+  schedule:
+    - cron: '*/10 12-14 * * 6'   # 토 21:00~23:50 KST, 10분 간격 (이미 확정이면 수 초 만에 종료)
+    - cron: '7 0 * * 0'          # 일 09:07 KST 백스톱
+    - cron: '7 0 * * 1'          # 월 09:07 KST 최종 백스톱
+  workflow_dispatch:
+    inputs:
+      seed:
+        description: '1회~최신 전체를 미러 3곳 교차검증으로 재구축'
+        type: boolean
+        default: false
+  pull_request:
+    paths:
+      - 'scripts/**'
+      - 'public/data/**'
+      - '.github/workflows/update_lotto_data.yml'
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: lotto-data-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Unit & data integrity tests
+        run: python -m unittest discover -s scripts -v
+
+      - name: Run ETL (stdlib only)
+        id: etl
+        if: github.event_name != 'pull_request'
+        env:
+          LOTTO_OFFICIAL_BASE: ${{ secrets.LOTTO_OFFICIAL_BASE }}   # 비워두면 동행복권 직접 호출
+        run: python scripts/update_lotto.py ${{ inputs.seed && '--seed' || '' }}
+
+      - name: Re-check data after update   # ETL이 SLA 실패(exit 1)여도 수집분 검증
+        id: recheck
+        if: always() && steps.etl.outcome != 'skipped'
+        run: python -m unittest discover -s scripts -k StoredDataTests
+
+      - name: Commit & push data   # 재검증을 통과한 데이터만 커밋
+        if: always() && steps.recheck.outcome == 'success'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data
+          git diff --staged --quiet && exit 0
+          latest=$(python -c "import json;print(json.load(open('public/data/latest.json'))['latest']['no'])")
+          git commit -m "chore(data): update lotto draws (${latest}회)"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push
+
+      - name: Open issue on failure
+        if: failure() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create data-pipeline --color B60205 --force >/dev/null
+          open=$(gh issue list --label data-pipeline --state open --json number --jq 'length')
+          [ "$open" = "0" ] || exit 0
+          gh issue create --label data-pipeline \
+            --title "로또 데이터 수집 실패 ($(date -u +%F))" \
+            --body "실행 로그: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"

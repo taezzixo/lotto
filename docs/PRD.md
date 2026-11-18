@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 | :--- | :--- |
-| 문서 버전 | **v2.0** (v1.0 검토 결과 반영 개정판) |
+| 문서 버전 | **v2.1** (v2.0 + 1~1,250회 데이터 구축 완료·수집 파이프라인 구현 반영) |
 | 작성 기준일 | 2026년 11월 18일 (제1,250회 · 2026-11-14 추첨분까지 반영) |
 | 제품 형태 | 모바일 퍼스트 반응형 웹앱(PWA) + 서버리스 주간 데이터 수집 파이프라인 |
 | 핵심 한 줄 | **종이 로또의 QR을 찍으면 바로 채점되고, 내 기록이 자동으로 쌓여 “나의 적중률”을 재미있게 보여주는 무료·무가입 서비스** |
@@ -18,7 +18,7 @@
 | 분석 대상 데이터 | 1~5등 당첨금·ROI | **1등 데이터만 수집·분석**(당첨자 수, 1인당·총 당첨금, 판매액, 자동/수동 구분). 2~5등 당첨금은 수집하지 않음 | 2·3등 회차별 당첨금은 원천 API에 없어 수집 비용이 크고 핵심 가치와 무관함 |
 | 등수 판정 | 당첨금까지 계산 | 등수(1~5등)는 **번호·보너스만으로 판정**. 금액은 1등(실제 금액)과 4·5등(고정 5만/5천 원)만 표시하고, 2·3등은 “동행복권에서 금액 확인” 링크 | 보너스 번호는 2등 판정에 필요하므로 수집은 유지함 |
 | 핵심 기능 | 번호 생성·백테스트 중심 | **QR 스캔 → 자동 채점 → 자동 저장 → 나의 적중률 리포트**가 핵심 루프. 생성기는 보조 기능(P1) | 실사용자는 주로 휴대폰으로 종이 복권을 확인함 |
-| 데이터 소스 | 동행복권 단일 | **다중 소스 + 폴백 + 교차검증**(§9) | 동행복권이 해외 IP(GitHub Actions)를 차단한 사례가 2026-10에 보고됨 |
+| 데이터 소스 | 동행복권 구 API 단일 | **개편 후 공식 JSON(1순위) + 독립 미러 3곳 다수결 폴백**(§9). **1~1,250회 전체를 3곳 교차검증으로 구축 완료**(§9.0) | 구 API는 해외 IP 차단 보고. 새 엔드포인트는 GitHub Actions에서 동작 확인 |
 | 수집 일정 | cron 2회, SLA 99.9% | 토요일 21:00~23:50 10분 간격 + 일·월 백스톱, **번호 SLA(토 23:00) 95% / 확정 SLA(일 12:00) 99%** | GitHub 스케줄 지연·누락을 감안함 |
 | 사전 연산 | `stats_summary.json` 서버 연산 | **폐지**. 원본 `draws.json` 하나만 배포하고 통계는 클라이언트에서 계산 | 1,250회×45개 번호 연산은 수 ms 수준. 데이터 출처를 하나로 유지 |
 | 백엔드 의존 기능 | 소셜 로그인 동기화, Web Push, 전체 성적 공시 | **MVP에서 제외**(로드맵 P2로 이동). 대안으로 `.ics` 캘린더 알림 제공 | “무가입·서버리스” 원칙과 충돌 |
@@ -307,85 +307,72 @@ export function luckPercentile(totalMatched: number, games: number): number {
 
 ## 9. 데이터 자동수집 워크플로
 
+### 9.0 데이터 구축 현황 (2026-11-18 기준, 구축 완료)
+
+| 항목 | 상태 |
+| :--- | :--- |
+| 수록 범위 | **제1회(2002-12-07) ~ 제1,250회(2026-11-14), 1,250회 전체, 누락 0** |
+| 파일 | `public/data/draws.json`(원본 287KB, gzip 38KB), `public/data/latest.json` |
+| 교차검증 | 서로 독립적으로 수집된 공개 데이터셋 3곳(smok95, Testrapod, gerosyab)을 회차별로 대조. **번호 6개·보너스·추첨일·1등 인원·1등 1인당 당첨금·판매액이 1,250회 모두 3곳 일치** |
+| 정합성 | 회차 연속성, 1~45 범위, 중복 없음, 보너스 중복 없음, 추첨일 토요일, 예상 추첨일(제1회부터 매주) 전부 통과. 휴회로 인한 날짜 예외 없음 |
+| 외부 통계 대조 | 보너스 제외 1위 **34번 188회**, 보너스 포함 1위 **27번 217회**, 13·34번 212회(v1.0에 인용된 로또타파·시그널파이어·min-inter 수치와 정확히 일치). 제1,128회 1등 63명, 제1,000회·제1,250회 값 일치 |
+| 1등 0명(이월) 회차 | 1, 4, 5, 7, 8, 9, 13, 18, 24, 41, 71, 289, 295, 463회(14회) |
+| 1등 자동/수동 인원 | 제262회부터 보유(인원 합계가 1등 당첨자 수와 전 회차 일치). 제2~261회는 `firstType: null` |
+| 재현 방법 | `python scripts/update_lotto.py --seed`(미러 3곳 내려받기 → 3곳 모두 일치해야 통과). 테스트: `python -m unittest discover -s scripts` |
+
 ### 9.1 데이터 소스 재조사 결과 (2026-11 기준)
 
-| 소스 | 형태 | 제공 데이터 | 해외 서버 접근 | 공식성 | 채택 역할 |
+| 소스 | 형태 | 제공 데이터 | GitHub Actions 접근 | 공식성 | 채택 역할 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **동행복권 `getLottoNumber`**<br>`https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo={회차}` | JSON(문서화되지 않은 내부 엔드포인트, `Content-Type`이 `text/html`일 수 있음) | 번호 6 + 보너스, 추첨일, 1등 인원·1인당·총 당첨금, 총 판매액 | **차단 보고**: GitHub Actions에서 타임아웃(2026-10, [hambakim/Note#2](https://github.com/hambakim/Note/pull/2)), 302 리다이렉트 차단 보고도 있음 | 공식 원천(비공개 API) | **1순위**. 서울 리전 릴레이 경유(§9.3) |
-| 동행복권 회차별 결과 페이지·엑셀 다운로드 | HTML / xls | 위 항목 + 1등 자동/수동 구분 | 동일 제약 | 공식 | 시드 검증·수동 복구용 |
-| **smok95 공개 JSON**([github.com/smok95/lotto](https://github.com/smok95/lotto))<br>`https://smok95.github.io/lotto/results/{회차|latest|all}.json` | JSON(GitHub Pages) | 번호·보너스·추첨일, `divisions`(1~5등 인원·금액), 판매액, **1등 자동/반자동/수동 인원** | 가능 | 비공식 커뮤니티 데이터. 라이선스 미표기, “오류가 있을 수 있음” 고지 | **2순위**: 폴백, 교차검증, 초기 시드, 1등 자동/수동 보강 |
-| 네이버 검색 결과 | HTML 스크래핑 | 최신 회차 번호 | 가능하다는 보고 있음 | 비공식, 구조 변경·약관 리스크 | **미채택**(P2 검토). 사용 시 회차 불일치 결과 무시 필수 |
-| 공공데이터포털 | – | 당첨번호 API **없음**. 1등 판매점 등 파일 데이터만 있음([data.go.kr](https://www.data.go.kr/data/15059963/fileData.do)) | – | 공식 | 미사용 |
+| **동행복권 개편 후 JSON**<br>`/lt645/selectPstLt645InfoNew.do?srchDir=center&srchLtEpsd={회차}`<br>`/lt645/selectPstLt645Info.do`(최신) | JSON `data.list[]`(문서화되지 않은 내부 엔드포인트). 필드: `ltEpsd`, `ltRflYmd`, `tm1~6WnNo`, `bnsWnNo`, `rnk1WnNope`, `rnk1WnAmt`, `wholEpsdSumNtslAmt` | 번호·보너스·추첨일·1등 인원·1인당 당첨금·판매액 | **가능**: [Testrapod/lottoworld](https://github.com/Testrapod/lottoworld)가 이 엔드포인트로 2026-10~11월 예약 실행 8회 모두 성공 | 공식 원천 | **1순위** |
+| 동행복권 구 JSON `common.do?method=getLottoNumber` | JSON | 동일 | 해외 IP 차단·302 리다이렉트 보고([hambakim/Note#2](https://github.com/hambakim/Note/pull/2)) | 공식(구) | **미사용**(개편 후 대체됨) |
+| **smok95 공개 JSON**([smok95/lotto](https://github.com/smok95/lotto)) | GitHub Pages JSON(회차별·`latest`·`all`) | 위 항목 + **1등 자동/반자동/수동 인원** | 가능. 토 21:01경 갱신 | 비공식, 라이선스 미표기 | 2순위 미러 + 1등 자동/수동 보강 |
+| **Testrapod 미러** | 공식 응답을 구 API 형식으로 저장한 JSON(raw.githubusercontent) | 번호·1등·판매액 | 가능. 일 02:00~03:00 KST 갱신 | 비공식(공식 응답 사본) | 미러 |
+| **gerosyab 미러**([gerosyab/api](https://github.com/gerosyab/api)) | JSON `{keys, data}` | 번호·1등(판매액 없음) | 가능. 일 00:38 KST 갱신 | 비공식 | 미러 |
+| 공공데이터포털 | – | 당첨번호 API **없음**(1등 판매점 파일만 있음, [data.go.kr](https://www.data.go.kr/data/15059963/fileData.do)) | – | 공식 | 미사용 |
 
 **결론**
-- 공식 공개 API는 존재하지 않는다. 동행복권 내부 엔드포인트는 사전 고지 없이 바뀌거나 차단될 수 있다.
-- 따라서 **① 동행복권(직접 → 서울 릴레이) → ② smok95** 폴백 체인을 쓰고, 둘 다 응답하면 번호를 **교차검증**한다.
-- 공식 소스로 확인되지 않은 데이터는 `PROVISIONAL`로 표시한다.
+- 공식 공개 API는 없다. 개편된 동행복권 내부 JSON은 해외 러너에서도 동작하는 것이 확인되어 1순위로 쓴다.
+- 공식 소스가 막히면 **미러 3곳의 다수결(2곳 이상 일치)**로 확정한다.
+- 미러가 1곳만 응답하면 `PROVISIONAL`로 표시한다.
 
 ### 9.2 아키텍처
 
 ```mermaid
 flowchart TB
     subgraph GH[GitHub Actions · 스케줄러]
-      CRON[cron 토 21:00~23:50 10분 간격<br/>+ 일·월 09:07 백스톱] --> ETL[scripts/update_lotto.py]
+      CRON[cron 토 21:00~23:50 10분 간격<br/>+ 일·월 09:07 백스톱] --> TEST[단위·무결성 테스트] --> ETL[scripts/update_lotto.py]
     end
-    ETL -- ① 직접 --> DH[(동행복권 getLottoNumber)]
-    ETL -- ② 해외 차단 시 --> RELAY[서울 리전 릴레이<br/>AWS Lambda ap-northeast-2] --> DH
-    ETL -- ③ 폴백·교차검증 --> SM[(smok95 GitHub Pages JSON)]
-    ETL --> VAL{검증<br/>범위·중복·정렬·연속성·토요일·소스 일치}
-    VAL -- 통과 --> FILES[public/data/draws.json<br/>public/data/latest.json]
+    ETL -- ① 공식 --> DH[(동행복권 /lt645/selectPstLt645InfoNew.do)]
+    ETL -- ② 공식 실패 시 다수결 --> MIR[(미러 3곳<br/>smok95 · Testrapod · gerosyab)]
+    ETL --> VAL{검증<br/>범위·중복·연속성·토요일<br/>저장값과 충돌 여부}
+    VAL -- 통과 --> RECHK[저장 데이터 재검증] --> COMMIT[public/data 커밋·푸시] --> CF[Cloudflare Pages 자동 배포]
     VAL -- 실패 --> ISSUE[GitHub Issue 자동 생성<br/>label: data-pipeline]
-    FILES --> COMMIT[자동 커밋·푸시] --> CF[Cloudflare Pages 자동 배포]
     CF --> APP[PWA 클라이언트<br/>통계는 클라이언트에서 계산]
-    APP -. 데이터 지연 시 폴백 .-> SM
 ```
 
-### 9.3 서울 리전 릴레이 (P0 조건부)
+### 9.3 국내 릴레이 (비상용, 현재 불필요)
 
-- **목적**: 동행복권이 해외 IP를 차단해도 한국 IP에서 조회한다. 응답을 손대지 않고 그대로 전달하는 프록시다.
-- **구성**: AWS Lambda(서울 리전) + Function URL. 프리 티어 범위 안이다. 대체 수단으로 국내 클라우드 무료 VM의 self-hosted runner도 가능하다.
-- **보안**: Bearer 토큰(GitHub Secrets `LOTTO_RELAY_TOKEN`), `drwNo` 정수만 허용, 리다이렉트는 따라가지 않음.
-- **도입 조건**: Phase 0 PoC에서 GitHub Actions의 직접 호출이 실패하면 필수로 도입한다(현재 보고 기준으로는 필수일 가능성이 높음).
-
-```js
-// index.mjs — AWS Lambda (Node.js 20, ap-northeast-2) Function URL
-export const handler = async (event) => {
-  if (event.headers?.authorization !== `Bearer ${process.env.TOKEN}`) return { statusCode: 401 };
-  const no = Number(event.queryStringParameters?.drwNo);
-  if (!Number.isInteger(no) || no < 1 || no > 9999) return { statusCode: 400 };
-  const r = await fetch(`https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo=${no}`,
-    { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; LottoLabRelay/1.0)' }, redirect: 'manual' });
-  if (r.status !== 200) return { statusCode: 502, body: `upstream ${r.status}` };
-  return { statusCode: 200, headers: { 'content-type': 'application/json' }, body: await r.text() };
-};
-```
+- 공식 엔드포인트가 해외 IP를 다시 막을 경우를 대비한다. 서울 리전 AWS Lambda 같은 국내 프록시를 띄운다.
+- GitHub Secret `LOTTO_OFFICIAL_BASE`에 릴레이 주소만 넣으면 ETL이 그 주소로 `/lt645/...` 경로를 호출한다. 코드 변경은 필요 없다.
+- 릴레이는 `/lt645/selectPstLt645InfoNew.do`만 허용하고 리다이렉트를 따라가지 않으며 토큰 인증을 둔다.
 
 ### 9.4 데이터 스키마 (1등 데이터 전용)
 
-`public/data/draws.json`: 회차 오름차순 배열. 1,250회 기준 원본 약 290KB, **gzip 약 20KB**(합성 데이터로 측정).
+`public/data/draws.json`: 회차 오름차순 배열, 한 줄에 한 회차(git diff 가독성).
 
 ```json
-{
-  "no": 1250,
-  "date": "2026-11-14",
-  "nums": [1, 5, 18, 23, 27, 28],
-  "bonus": 8,
-  "first": { "winners": 9, "prize": 3103160000, "total": 27928440000 },
-  "sales": 118000000000,
-  "firstType": { "auto": 6, "semi": 0, "manual": 3 },
-  "status": "COMPLETE",
-  "source": "dhlottery"
-}
+{"no":1250,"date":"2026-11-14","nums":[1,5,18,23,27,28],"bonus":8,"first":{"winners":9,"prize":3103164459},"sales":116731227000,"firstType":{"auto":9,"semi":0,"manual":0},"status":"COMPLETE","source":"seed:gerosyab+smok95+testrapod"}
 ```
-> 위 값은 형식 예시다(번호와 1등 인원·금액은 v1.0 PRD 인용값, 나머지는 임의값). 실제 값은 파이프라인이 수집한다.
 
 | 필드 | 설명 |
 | :--- | :--- |
-| `first.winners / prize / total` | 1등 당첨자 수 / 1인당 당첨금 / 1등 총 당첨금 |
-| `sales` | 총 판매액(원). 1등 인기도 지수의 분모 계산에 사용 |
-| `firstType` | 1등 자동·반자동·수동 인원(소스에 없으면 `null`) |
-| `status` | `COMPLETE`(공식 확정) / `PARTIAL`(번호 확정, 1등 집계 대기) / `PROVISIONAL`(비공식 단일 출처) |
-| `source` | `dhlottery` · `dhlottery-relay` · `smok95` |
+| `nums`, `bonus` | 본번호 6개(오름차순), 보너스 번호(2등 판정용) |
+| `first.winners / prize` | 1등 당첨자 수 / 1인당 당첨금(원). 1등 총액은 `winners × prize`로 클라이언트에서 계산 |
+| `sales` | 총 판매액(원). 인기도 지수 분모(판매 게임 수 = `sales / 1000`) |
+| `firstType` | 1등 자동·반자동·수동 인원(정보가 없으면 `null`) |
+| `status` | `COMPLETE` / `PARTIAL` / `PROVISIONAL`(§9.5) |
+| `source` | `dhlottery`(공식), `mirror:a+b`(미러 다수결), `seed:…`(초기 3곳 교차검증) |
 
 `public/data/latest.json`: 홈 첫 화면용 경량 파일(`latest`, `count`, `nextRound`, `nextDrawAt`, `updatedAt`).
 
@@ -393,97 +380,47 @@ export const handler = async (event) => {
 
 ```mermaid
 stateDiagram-v2
-    [*] --> PROVISIONAL: 비공식 소스만 응답
-    [*] --> PARTIAL: 공식 응답 & 1등 집계 전(인원·금액 0)
-    [*] --> COMPLETE: 공식 응답 & 판매액·1등 인원·금액 > 0
-    PROVISIONAL --> PARTIAL: 공식 소스 복구
-    PROVISIONAL --> COMPLETE: 공식 소스 복구 & 집계 완료
-    PARTIAL --> COMPLETE: 1등 인원·금액 반영
+    [*] --> PROVISIONAL: 미러 1곳만 응답
+    [*] --> PARTIAL: 번호 확정(공식 또는 미러 2곳) & 1등 집계 전
+    [*] --> COMPLETE: 번호 확정 & 판매액·1등 인원·당첨금 반영
+    PROVISIONAL --> PARTIAL: 공식 복구 또는 미러 2곳 일치
+    PROVISIONAL --> COMPLETE: 〃 & 집계 완료
+    PARTIAL --> COMPLETE: 1등 인원·당첨금 반영
     PARTIAL --> COMPLETE: 1등 0명(이월)이 추첨 12시간 후에도 유지
 ```
 
-- 미확정 회차는 실행마다 최신순으로 최대 30건까지 다시 수집해 승격을 시도한다.
-- 공식 소스가 한 번 실패하면 그 실행 안에서는 다시 호출하지 않는다(서킷 브레이커).
+- 미확정 회차는 실행마다 최신순으로 최대 30건까지 다시 수집한다.
+- `PARTIAL` 이상인 회차의 번호가 새 수집과 다르면 **중단하고 수동 검토**한다(정정 감지).
+- 공식 값과 미러 값이 다르면 공식 값을 쓰고 경고를 남긴다.
+- 미러끼리 동률로 불일치하면 중단한다.
+- 한 번 실패한 소스는 그 실행 안에서 다시 호출하지 않는다(서킷 브레이커).
 
 ### 9.6 주간 스케줄 (KST, cron은 UTC)
 
 | 단계 | 시각 (KST) | cron (UTC) | 작업 |
 | :--- | :--- | :--- | :--- |
-| Stage 0. 초기 시드 | 오픈 전 1회 (수동 실행 `seed=true`) | – | smok95 `all.json`으로 1~최신 회차 일괄 구축(`PROVISIONAL`) → 이후 실행마다 공식 소스로 30건씩 검증·승격. 동행복권 엑셀로 샘플 대조 |
-| Stage 1. 속보 수집 | 토 21:00 ~ 23:50, **10분 간격** | `*/10 12-14 * * 6` | 새 회차 조회 → 번호 반영(`PARTIAL`/`COMPLETE`). 이미 `COMPLETE`면 수 초 만에 종료(멱등) |
-| Stage 2. 백스톱 ① | 일 09:07 | `7 0 * * 0` | 미확정 회차 재수집, 1등 0명 확정 판정 |
-| Stage 3. 백스톱 ② | 월 09:07 | `7 0 * * 1` | 최종 재시도. **추첨 후 36시간이 지나도 미확정이면 실패 처리 → Issue 알림** |
-| Stage 4. 검증 | 수집 직후 | – | 번호 6개 오름차순·중복 없음, 1~45 범위, 보너스 중복 없음, 회차 연속성, 추첨일 토요일, 예상 추첨일과 다르면 경고, **공식·비공식 번호 불일치 시 즉시 중단** |
-| Stage 5. 배포 | 변경이 있을 때만 | – | `public/data/*` 커밋(`pull --rebase` 후 push) → Cloudflare Pages 자동 배포(약 1분) |
+| Stage 0. 초기 시드 | **완료**(2026-11-18) | – | §9.0 참고. 재구축이 필요하면 `workflow_dispatch`에서 `seed=true` |
+| Stage 1. 속보 수집 | 토 21:00 ~ 23:50, **10분 간격** | `*/10 12-14 * * 6` | 공식 엔드포인트 조회 → 번호 반영(`PARTIAL`/`COMPLETE`). 이미 확정이면 수 초 만에 종료(멱등, 변경 없으면 커밋 없음) |
+| Stage 2. 백스톱 ① | 일 09:07 | `7 0 * * 0` | 미확정 재수집. 이 시각에는 미러 3곳도 모두 갱신된 상태라 공식 장애 시에도 다수결 확정 가능 |
+| Stage 3. 백스톱 ② | 월 09:07 | `7 0 * * 1` | 최종 재시도. **추첨 후 36시간이 지나도 미확정이면 exit 1 → Issue 알림** |
+| Stage 4. 검증 | 수집 직후 | – | 실행 전 단위·무결성 테스트, 수집 후 저장 데이터 재검증(1회부터 연속, 알려진 회차 값, 외부 통계 일치). **재검증을 통과한 경우에만 커밋** |
+| Stage 5. 배포 | 변경이 있을 때만 | – | `public/data/*` 커밋(`pull --rebase` 후 push) → Cloudflare Pages 자동 배포 |
 
-> GitHub 스케줄은 혼잡 시간에 수십 분 지연되거나 누락될 수 있다. 그래서 10분 간격 다중 실행과 백스톱으로 보완한다. 저장소에 60일간 활동이 없으면 스케줄이 비활성화되지만, 매주 데이터 커밋이 생기므로 해당하지 않는다.
+> GitHub 스케줄은 혼잡 시 지연이 크다. 참고 사례인 Testrapod는 21:17 예약 실행의 커밋이 수 시간 뒤에 기록되었다. 10분 간격 다중 실행과 백스톱으로 보완한다. **예약 실행은 기본 브랜치(main)에 있을 때만 동작**한다.
 
 ### 9.7 GitHub Actions 워크플로
 
-```yaml
-# .github/workflows/update_lotto_data.yml
-name: Lotto 6/45 weekly ingestion
+구현 파일: [`.github/workflows/update_lotto_data.yml`](../.github/workflows/update_lotto_data.yml)
 
-on:
-  schedule:
-    - cron: '*/10 12-14 * * 6'   # 토 21:00~23:50 KST, 10분 간격
-    - cron: '7 0 * * 0'          # 일 09:07 KST 백스톱
-    - cron: '7 0 * * 1'          # 월 09:07 KST 최종 백스톱
-  workflow_dispatch:
-    inputs:
-      seed:
-        description: 'draws.json이 없을 때 전체 회차 초기 구축'
-        type: boolean
-        default: false
+| 스텝 | 조건 | 내용 |
+| :--- | :--- | :--- |
+| Unit & data integrity tests | 항상(PR 포함) | `python -m unittest discover -s scripts`(13개 테스트) |
+| Run ETL | PR 제외 | `scripts/update_lotto.py`(수동 실행에서 `seed=true`면 `--seed`) |
+| Re-check data | ETL이 실행된 경우(SLA 실패 포함) | 저장 데이터 무결성 재검증 |
+| Commit & push | 재검증 성공 시에만 | 변경이 있을 때만 커밋 |
+| Open issue | 예약 실행 실패 시 | `data-pipeline` 라벨 이슈 생성(열린 이슈가 있으면 생략) |
 
-permissions:
-  contents: write
-  issues: write
-
-concurrency:
-  group: lotto-data
-  cancel-in-progress: false
-
-jobs:
-  ingest:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Run ETL (stdlib only)
-        env:
-          LOTTO_RELAY_URL: ${{ secrets.LOTTO_RELAY_URL }}
-          LOTTO_RELAY_TOKEN: ${{ secrets.LOTTO_RELAY_TOKEN }}
-        run: python scripts/update_lotto.py ${{ inputs.seed && '--seed' || '' }}
-
-      - name: Commit & push data
-        if: always()   # SLA 실패(exit 1)여도 수집된 부분은 반영
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/data
-          git diff --staged --quiet && exit 0
-          git commit -m "chore(data): update lotto draws"
-          git pull --rebase origin "${GITHUB_REF_NAME}"
-          git push
-
-      - name: Open issue on failure   # 사전에 'data-pipeline' 라벨을 1회 생성해 둘 것
-        if: failure() && github.event_name == 'schedule'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh issue list --label data-pipeline --state open --json number --jq 'length' | grep -q '^0$' || exit 0
-          gh issue create --label data-pipeline \
-            --title "로또 데이터 수집 실패 ($(date -u +%F))" \
-            --body "실행 로그: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-```
-
-**ETL 종료 코드**: `0` 정상(추첨 전이라 아직 데이터가 없는 경우 포함), `1` SLA 위반(36시간 경과 후 미확정), `2` 검증 실패(소스 불일치·정합성 위반 → 데이터 미반영). ETL 전체 소스는 부록 C에 있다.
+**ETL 종료 코드**: `0` 정상(추첨 전이라 아직 데이터가 없는 경우 포함), `1` SLA 위반(수집분은 커밋), `2` 검증 실패(데이터 미반영).
 
 ### 9.8 클라이언트 데이터 로딩
 
@@ -544,7 +481,7 @@ jobs:
 | 오프라인 | 앱 셸·데이터 캐시. 오프라인에서 스캔하면 대기 티켓으로 저장 |
 | 접근성 | 볼 색상(1~10 노랑, 11~20 파랑, 21~30 빨강, 31~40 회색, 41~45 초록)과 숫자 텍스트를 함께 표시해 색만으로 정보를 전달하지 않음. 명도 대비 4.5:1, 스크린리더 레이블, 축하 애니메이션은 `prefers-reduced-motion`을 따름 |
 | 개인정보 | 번호·QR·기록은 기기에만 저장. 분석은 쿠키 없는 도구(Umami/Plausible 등)로 **이벤트 이름만** 수집(번호·회차·TR 제외). 카메라 영상 미저장 |
-| 보안 | HTTPS 필수(카메라 API 요건), CSP 적용, 외부 스크립트 최소화. 릴레이 토큰은 GitHub Secrets에 보관 |
+| 보안 | HTTPS 필수(카메라 API 요건), CSP 적용, 외부 스크립트 최소화. 비상용 릴레이 주소·토큰은 GitHub Secrets에 보관 |
 | 호환성 | iOS Safari 16.4+, Android Chrome 최신 2개 버전, 삼성 인터넷 |
 
 ---
@@ -555,7 +492,7 @@ jobs:
 2. **비공식 서비스 표기**: “동행복권과 무관한 비공식 서비스이며, 당첨 여부와 당첨금은 반드시 동행복권 공식 사이트 또는 판매점에서 확인하세요.” 동행복권 로고·상표는 쓰지 않는다.
 3. **청소년 보호**: 19세 미만 복권 구매 불가 안내, 한국도박문제예방치유원 헬프라인 **1336** 링크를 푸터에 둔다.
 4. **과몰입 방지**: 리포트에 누적 구매액을 항상 표시하고, 월 구매액이 사용자가 정한 한도를 넘으면 부드러운 안내를 보여준다(선택 기능, P1).
-5. **데이터 수집 예절**: 원 서버 호출은 주 수십 회 이내로 제한하고, 요청 간격 0.3초 이상, 식별 가능한 User-Agent를 쓴다. 이용약관과 robots 정책은 출시 전에 검토한다. smok95 데이터는 라이선스가 표기되어 있지 않으므로 출처를 표기하고 폴백·검증 용도로 한정한다.
+5. **데이터 수집 예절**: 원 서버 호출은 주 수십 회 이내로 제한하고, 요청 간격 0.3초 이상, 식별 가능한 User-Agent를 쓴다. 이용약관과 robots 정책은 출시 전에 검토한다. 미러 데이터(smok95, Testrapod, gerosyab)는 라이선스가 표기되어 있지 않으므로 출처를 표기하고 검증·폴백 용도로 한정한다. 당첨번호 자체는 사실 정보이며, 기준은 공식 소스다.
 6. **구매 대행·중개 금지**: 복권 구매·결제 기능은 제공하지 않는다.
 
 ---
@@ -577,7 +514,7 @@ jobs:
 
 | 단계 | 일정 | 범위 |
 | :--- | :--- | :--- |
-| **Phase 0: PoC** | D-7 ~ D0 | ① GitHub Actions에서 동행복권 직접 호출 가능 여부 확인 → 실패 시 서울 릴레이 구축<br>② 실물 복권 10장 이상(자동/수동/반자동, 1~5게임)으로 QR 형식 검증<br>③ iOS Safari·Android Chrome 카메라 인식률 측정<br>④ smok95 데이터와 동행복권 공식 값 샘플 100회차 대조, GitHub Pages CORS 확인 |
+| **Phase 0: PoC** | D-7 ~ D0 | ① ~~데이터 소스 확보~~ **완료**: 1~1,250회 시드 구축, 새 공식 엔드포인트의 GitHub Actions 동작 사례 확인. 남은 일은 main 머지 후 첫 토요일 예약 실행 결과 확인<br>② 실물 복권 10장 이상(자동/수동/반자동, 1~5게임)으로 QR 형식 검증<br>③ iOS Safari·Android Chrome 카메라 인식률 측정<br>④ smok95 GitHub Pages의 CORS 허용 여부 확인(클라이언트 폴백용) |
 | **Phase 1: MVP** | D+1 ~ D+2주 | FR-01~08: 데이터 파이프라인, 홈, QR 스캔·자동 저장·자동 채점, 내 기록, 적중률 기본 리포트 |
 | **Phase 2: 재미·분석** | D+3 ~ D+4주 | FR-09~12, 15, 16: 배지·공유 카드, 번호 빈도 통계, 1등 분석(인기도 지수), 실수령액 계산기, PWA 설치·`.ics`, 백업/복원 |
 | **Phase 3: 생성기** | D+5 ~ D+6주 | FR-13~14: 필터 생성기, 역대 대조, 희소성 점수(인기도 지수 기반 보정) |
@@ -591,10 +528,10 @@ jobs:
 
 | # | 이슈 | 해결 방법 / 책임 단계 |
 | :--- | :--- | :--- |
-| 1 | 동행복권 엔드포인트의 해외 IP 차단·리다이렉트 여부(현재 시점) | Phase 0 PoC. 차단이면 릴레이 필수 |
+| 1 | 공식 엔드포인트가 다시 해외 IP를 막을 가능성 | 미러 다수결로 자동 대응 중. 장기간 막히면 국내 릴레이(`LOTTO_OFFICIAL_BASE`)를 투입 |
 | 2 | QR 유형 문자(`q`/`m`/`s`/`n`) 의미와 1~4게임 티켓의 블록 구성 | 실물 복권으로 검증. 파서는 알 수 없는 문자를 건너뛰도록 이미 방어 처리 |
-| 3 | 1등 집계 전에 API가 `success` + 금액 0을 주는지, `fail`을 주는지 | 토요일 21:00~22:00 실측. 두 경우 모두 상태 전이 규칙으로 처리됨 |
-| 4 | 1등 자동/수동 구분 데이터의 공식 출처 | 동행복권 결과 페이지 파싱 추가 여부를 Phase 2에서 결정(그 전까지는 smok95 값을 비공식으로 표기) |
+| 3 | 1등 집계 전에 공식 엔드포인트가 금액 0을 주는지, 해당 회차를 아예 빼고 주는지 | 첫 토요일 실행 로그로 확인. 두 경우 모두 상태 전이 규칙으로 처리됨 |
+| 4 | 1등 자동/수동 구분 데이터의 공식 출처 | 현재는 smok95 값(1등 인원 합계 일치 검증됨). 공식 결과 페이지 파싱 추가 여부를 Phase 2에서 결정 |
 | 5 | 휴회 등으로 추첨일이 예외적으로 바뀐 회차 존재 여부 | 시드 구축 시 예상 추첨일 경고 로그를 전수 검토 |
 
 ---
@@ -629,294 +566,18 @@ jobs:
 | 인기도 지수 | 회차 1등 실제 인원 ÷ (판매액 ÷ 1,000 ÷ 8,145,060). 1보다 크면 많은 사람이 고른 조합 |
 | PROVISIONAL / PARTIAL / COMPLETE | §9.5 상태 정의 |
 
-## 부록 C. ETL 전체 소스 (`scripts/update_lotto.py`)
+## 부록 C. 구현 파일
 
-모의 소스로 6가지 시나리오를 검증했다: 시드 구축 후 공식 승격, 집계 대기 `PARTIAL` → `COMPLETE`, 공식 차단 시 `PROVISIONAL` 폴백, 36시간 SLA 위반 시 exit 1, 공식 복구 후 승격과 자동/수동 보강, 소스 간 번호 불일치 시 `ValidationError`.
-
-```python
-#!/usr/bin/env python3
-"""로또 6/45 주간 데이터 수집 ETL (1등 데이터 전용, 표준 라이브러리만 사용).
-
-소스 우선순위: ① 동행복권 직접 → ② 동행복권 서울 리전 릴레이 → ③ smok95 공개 JSON
-상태: COMPLETE(확정) / PARTIAL(번호만 확정, 1등 집계 대기) / PROVISIONAL(비공식 단일 출처)
-"""
-from __future__ import annotations
-
-import argparse
-import datetime as dt
-import json
-import os
-import sys
-import time
-from pathlib import Path
-from urllib.parse import urlencode
-from urllib.request import Request, urlopen
-
-DATA_DIR = Path("public/data")
-DRAWS_PATH = DATA_DIR / "draws.json"
-LATEST_PATH = DATA_DIR / "latest.json"
-
-KST = dt.timezone(dt.timedelta(hours=9))
-FIRST_DRAW_AT = dt.datetime(2002, 12, 7, 20, 35, tzinfo=KST)  # 제1회 추첨
-WEEK = dt.timedelta(days=7)
-ZERO_WINNER_CONFIRM_AFTER = dt.timedelta(hours=12)  # 1등 0명(이월)은 12시간 뒤 확정
-SLA_LIMIT = dt.timedelta(hours=36)                   # 추첨 후 36시간 내 미확정이면 실패 처리
-UA = "Mozilla/5.0 (compatible; LottoLabBot/2.0; +https://github.com/)"
-
-DH_URL = "https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo={}"
-SMOK_URL = "https://smok95.github.io/lotto/results/{}.json"
-SMOK_ALL_URL = "https://smok95.github.io/lotto/results/all.json"
-
-
-class SourceError(Exception):
-    """소스 접근 실패·형식 오류 (다음 소스로 넘어감)."""
-
-
-class NotYetDrawn(Exception):
-    """해당 회차가 아직 발표되지 않음."""
-
-
-class ValidationError(Exception):
-    """데이터 정합성 위반 (파이프라인 중단 + 알림)."""
-
-
-# ---------------------------------------------------------------- HTTP
-def http_get(url: str, headers: dict | None = None, timeout: int = 10, retries: int = 3) -> str:
-    last: Exception | None = None
-    for attempt in range(retries):
-        try:
-            req = Request(url, headers={"User-Agent": UA, **(headers or {})})
-            with urlopen(req, timeout=timeout) as resp:
-                if resp.geturl().split("?")[0] != url.split("?")[0]:
-                    raise SourceError(f"redirected to {resp.geturl()}")  # 차단 페이지 리다이렉트
-                return resp.read().decode("utf-8", "replace")
-        except SourceError:
-            raise
-        except Exception as e:  # 타임아웃·연결 거부 등 → 백오프 후 재시도
-            last = e
-            time.sleep(2 * (attempt + 1))
-    raise SourceError(f"{url}: {last}")
-
-
-def parse_json(text: str, src: str) -> dict:
-    try:
-        return json.loads(text)  # Content-Type이 text/html이어도 본문은 JSON
-    except json.JSONDecodeError as e:
-        raise SourceError(f"{src}: JSON 아님 ({text[:80]!r})") from e
-
-
-# ---------------------------------------------------------------- 소스 어댑터
-def from_dhlottery_payload(p: dict) -> dict:
-    if p.get("returnValue") != "success":
-        raise NotYetDrawn()
-    return {
-        "no": p["drwNo"],
-        "date": p["drwNoDate"],
-        "nums": [p[f"drwtNo{i}"] for i in range(1, 7)],
-        "bonus": p["bnusNo"],
-        "first": {"winners": p["firstPrzwnerCo"], "prize": p["firstWinamnt"], "total": p["firstAccumamnt"]},
-        "sales": p["totSellamnt"],
-        "firstType": None,  # 이 엔드포인트는 자동/수동 구분을 제공하지 않음
-    }
-
-
-def fetch_dhlottery(no: int) -> dict:
-    return from_dhlottery_payload(parse_json(http_get(DH_URL.format(no)), "dhlottery"))
-
-
-def fetch_dhlottery_relay(no: int) -> dict:
-    base, token = os.environ.get("LOTTO_RELAY_URL"), os.environ.get("LOTTO_RELAY_TOKEN")
-    if not base:
-        raise SourceError("relay 미설정")
-    text = http_get(f"{base}?{urlencode({'drwNo': no})}", headers={"Authorization": f"Bearer {token}"})
-    return from_dhlottery_payload(parse_json(text, "relay"))
-
-
-def from_smok_payload(p: dict) -> dict:
-    first = (p.get("divisions") or [{}])[0]
-    combo = p.get("winners_combination")
-    return {
-        "no": p["draw_no"],
-        "date": p["date"][:10],
-        "nums": sorted(p["numbers"]),
-        "bonus": p["bonus_no"],
-        "first": {"winners": first.get("winners", 0), "prize": first.get("prize", 0),
-                  "total": first.get("winners", 0) * first.get("prize", 0)},
-        "sales": p.get("total_sales_amount", 0),
-        "firstType": ({"auto": combo.get("auto", 0), "semi": combo.get("semi_auto", 0),
-                       "manual": combo.get("manual", 0)} if combo else None),
-    }
-
-
-def fetch_smok(no: int) -> dict:
-    try:
-        text = http_get(SMOK_URL.format(no), retries=1)
-    except SourceError as e:
-        if "404" in str(e):
-            raise NotYetDrawn() from e
-        raise
-    return from_smok_payload(parse_json(text, "smok95"))
-
-
-OFFICIAL = [("dhlottery", fetch_dhlottery), ("dhlottery-relay", fetch_dhlottery_relay)]
-UNOFFICIAL = [("smok95", fetch_smok)]
-DOWN: set[str] = set()  # 서킷 브레이커: 이번 실행에서 한 번 실패한 소스는 다시 호출하지 않음
-
-
-# ---------------------------------------------------------------- 검증
-def expected_date(no: int) -> str:
-    return (FIRST_DRAW_AT + WEEK * (no - 1)).date().isoformat()
-
-
-def validate(rec: dict, prev_no: int | None) -> None:
-    nums, bonus = rec["nums"], rec["bonus"]
-    if len(nums) != 6 or nums != sorted(nums) or len(set(nums)) != 6:
-        raise ValidationError(f"{rec['no']}회: 번호 6개 오름차순·중복 없음 위반 {nums}")
-    if not all(1 <= n <= 45 for n in nums + [bonus]) or bonus in nums:
-        raise ValidationError(f"{rec['no']}회: 범위(1~45) 또는 보너스 중복 위반")
-    if prev_no is not None and rec["no"] != prev_no + 1:
-        raise ValidationError(f"회차 연속성 위반: {prev_no} 다음 {rec['no']}")
-    if dt.date.fromisoformat(rec["date"]).weekday() != 5:
-        raise ValidationError(f"{rec['no']}회: 추첨일 {rec['date']}이 토요일이 아님")
-    if rec["date"] != expected_date(rec["no"]):
-        print(f"::warning::{rec['no']}회 추첨일 {rec['date']} ≠ 예상 {expected_date(rec['no'])} (휴회 여부 확인)")
-
-
-def decide_status(rec: dict, now: dt.datetime, official: bool) -> str:
-    if not official:
-        return "PROVISIONAL"
-    w, prize = rec["first"]["winners"], rec["first"]["prize"]
-    if rec["sales"] > 0 and w > 0 and prize > 0:
-        return "COMPLETE"
-    drawn_at = FIRST_DRAW_AT + WEEK * (rec["no"] - 1)
-    if rec["sales"] > 0 and w == 0 and now - drawn_at >= ZERO_WINNER_CONFIRM_AFTER:
-        return "COMPLETE"  # 1등 0명(이월) 확정
-    return "PARTIAL"
-
-
-def collect(no: int, now: dt.datetime) -> dict | None:
-    """공식 소스 우선, 실패 시 비공식. 둘 다 있으면 번호 교차검증."""
-    official_rec, unofficial_rec, errors = None, None, []
-    for name, fn in OFFICIAL:
-        if name in DOWN:
-            continue
-        try:
-            official_rec = fn(no) | {"source": name}
-            break
-        except NotYetDrawn:
-            return None
-        except SourceError as e:
-            DOWN.add(name)
-            errors.append(f"{name}: {e}")
-    for name, fn in UNOFFICIAL:
-        if name in DOWN:
-            continue
-        try:
-            unofficial_rec = fn(no) | {"source": name}
-            break
-        except NotYetDrawn:
-            pass
-        except SourceError as e:
-            DOWN.add(name)
-            errors.append(f"{name}: {e}")
-
-    if official_rec and unofficial_rec:
-        if (official_rec["nums"], official_rec["bonus"]) != (unofficial_rec["nums"], unofficial_rec["bonus"]):
-            raise ValidationError(f"{no}회 소스 간 번호 불일치: {official_rec} vs {unofficial_rec}")
-        if official_rec["firstType"] is None:
-            official_rec["firstType"] = unofficial_rec["firstType"]  # 자동/수동 비율 보강
-    rec = official_rec or unofficial_rec
-    if rec is None:
-        print(f"::notice::{no}회 수집 실패 → {errors}")
-        return None
-    rec["status"] = decide_status(rec, now, official=official_rec is not None)
-    return rec
-
-
-# ---------------------------------------------------------------- 메인
-def latest_drawn_round(now: dt.datetime) -> int:
-    """현재 시각 기준 추첨이 끝났어야 하는 마지막 회차."""
-    return (now - FIRST_DRAW_AT) // WEEK + 1
-
-
-def load() -> list[dict]:
-    return json.loads(DRAWS_PATH.read_text("utf-8")) if DRAWS_PATH.exists() else []
-
-
-def save(draws: list[dict], now: dt.datetime) -> None:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    DRAWS_PATH.write_text(json.dumps(draws, ensure_ascii=False, separators=(",", ":")), "utf-8")
-    latest = draws[-1]
-    next_draw = FIRST_DRAW_AT + WEEK * latest["no"]
-    LATEST_PATH.write_text(json.dumps({
-        "latest": latest,
-        "count": len(draws),
-        "nextRound": latest["no"] + 1,
-        "nextDrawAt": next_draw.isoformat(),
-        "updatedAt": now.isoformat(timespec="seconds"),
-    }, ensure_ascii=False, indent=1), "utf-8")
-
-
-def seed_from_smok_all() -> list[dict]:
-    rows = sorted((from_smok_payload(p) | {"source": "smok95", "status": "PROVISIONAL"}
-                   for p in parse_json(http_get(SMOK_ALL_URL, timeout=30), "smok95-all")),
-                  key=lambda r: r["no"])
-    return rows
-
-
-def run(now: dt.datetime, seed: bool, max_recheck: int = 30) -> int:
-    draws = seed_from_smok_all() if seed and not DRAWS_PATH.exists() else load()
-    for i, d in enumerate(draws):
-        validate(d, draws[i - 1]["no"] if i else None)
-
-    # 1) 미확정 회차(PARTIAL/PROVISIONAL)를 최신순으로 최대 max_recheck건 재수집해 공식 소스로 승격
-    pending = [i for i in reversed(range(len(draws))) if draws[i]["status"] != "COMPLETE"][:max_recheck]
-    for i in pending:
-        if all(name in DOWN for name, _ in OFFICIAL):
-            break  # 공식 소스가 모두 막혔으면 재수집해도 승격 불가
-        if rec := collect(draws[i]["no"], now):
-            validate(rec, draws[i - 1]["no"] if i else None)
-            draws[i] = rec
-        time.sleep(0.3)  # 원 서버 부하 방지
-
-    # 2) 신규 회차 수집
-    target = latest_drawn_round(now)
-    while (draws[-1]["no"] if draws else 0) < target:
-        no = (draws[-1]["no"] if draws else 0) + 1
-        rec = collect(no, now)
-        if rec is None:
-            break
-        validate(rec, draws[-1]["no"] if draws else None)
-        draws.append(rec)
-        print(f"{no}회 수집: {rec['nums']}+{rec['bonus']} [{rec['status']}/{rec['source']}]")
-
-    if draws:
-        save(draws, now)
-
-    # 3) SLA 판정: 추첨 후 36시간이 지났는데 미수집·미확정이면 실패(→ 이슈 알림)
-    last_due = FIRST_DRAW_AT + WEEK * (target - 1)
-    behind = not draws or draws[-1]["no"] < target or draws[-1]["status"] != "COMPLETE"
-    if behind and now - last_due > SLA_LIMIT:
-        print(f"::error::{target}회 데이터가 SLA(추첨 후 36시간) 내에 확정되지 않았습니다")
-        return 1
-    return 0
-
-
-if __name__ == "__main__":
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--seed", action="store_true", help="draws.json이 없을 때 전체 회차 초기 구축")
-    ap.add_argument("--max-recheck", type=int, default=30, help="실행당 미확정 회차 재수집 상한")
-    args = ap.parse_args()
-    try:
-        sys.exit(run(dt.datetime.now(KST), args.seed, args.max_recheck))
-    except ValidationError as e:
-        print(f"::error::{e}")
-        sys.exit(2)
-```
+| 파일 | 내용 |
+| :--- | :--- |
+| [`scripts/update_lotto.py`](../scripts/update_lotto.py) | ETL(표준 라이브러리만 사용): 공식 → 미러 다수결 폴백, 상태 전이, 시드 3곳 교차검증, SLA 판정 |
+| [`scripts/test_update_lotto.py`](../scripts/test_update_lotto.py) | 테스트 13개. 공식 확정·집계 대기·이월 확정·미러 다수결·동률 중단·단일 미러 잠정·시드→증분→SLA→복구 흐름, 저장 데이터 무결성(1회부터 연속, 알려진 회차, 외부 통계 일치) |
+| [`.github/workflows/update_lotto_data.yml`](../.github/workflows/update_lotto_data.yml) | 주간 스케줄 워크플로 |
+| [`public/data/draws.json`](../public/data/draws.json) | 1~1,250회 데이터 |
 
 ## 부록 D. 출처
 
-- 데이터 소스·차단 사례: [hambakim/Note PR#2 — GitHub 서버의 해외 IP 차단과 대체 소스](https://github.com/hambakim/Note/pull/2), [smok95/lotto — 공개 JSON](https://github.com/smok95/lotto), [공공데이터포털 파일데이터](https://www.data.go.kr/data/15059963/fileData.do), [Lunikism — getLottoNumber JSON](https://lunikism.com/entry/%EB%8F%99%ED%96%89%EB%B3%B5%EA%B6%8C-%EB%A1%9C%EB%98%90645-%ED%9A%8C%EC%B0%A8%EB%B3%84-%EA%B2%B0%EA%B3%BC%EC%A0%95%EB%B3%B4-JSON-%ED%9A%8D%EB%93%9D%ED%95%98%EA%B8%B0), [roeniss/dhlottery-api(비공식)](https://github.com/roeniss/dhlottery-api), [블러드스트로베리 — GitHub Actions 수집](https://bloodstrawberry.tistory.com/1352)
+- 데이터 소스·차단 사례: [hambakim/Note PR#2 — GitHub 서버의 해외 IP 차단과 대체 소스](https://github.com/hambakim/Note/pull/2), [smok95/lotto — 공개 JSON](https://github.com/smok95/lotto), [Testrapod/lottoworld — 개편 후 공식 엔드포인트 사용 사례](https://github.com/Testrapod/lottoworld), [gerosyab/api — 미러](https://github.com/gerosyab/api), [공공데이터포털 파일데이터](https://www.data.go.kr/data/15059963/fileData.do), [Lunikism — getLottoNumber JSON](https://lunikism.com/entry/%EB%8F%99%ED%96%89%EB%B3%B5%EA%B6%8C-%EB%A1%9C%EB%98%90645-%ED%9A%8C%EC%B0%A8%EB%B3%84-%EA%B2%B0%EA%B3%BC%EC%A0%95%EB%B3%B4-JSON-%ED%9A%8D%EB%93%9D%ED%95%98%EA%B8%B0), [roeniss/dhlottery-api(비공식)](https://github.com/roeniss/dhlottery-api), [블러드스트로베리 — GitHub Actions 수집](https://bloodstrawberry.tistory.com/1352)
 - QR 형식: [smok95/barcode_info](https://github.com/smok95/barcode_info), [bestevan01/Lotto-Utility](https://github.com/bestevan01/Lotto-Utility)
 - 소비자 피해·시장: [라이센스뉴스(한국소비자원 통계)](https://www.lcnews.co.kr/news/articleView.html?idxno=76227), [한겨레](https://www.hani.co.kr/arti/economy/consumer/1142498.html)
 - 추첨 일정·세금 기준: [프리또](https://freetto.io/), [동행복권](https://www.dhlottery.co.kr/)

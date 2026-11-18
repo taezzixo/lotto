@@ -1,0 +1,31 @@
+{
+ "latest": {
+  "no": 1250,
+  "date": "2026-11-14",
+  "nums": [
+   1,
+   5,
+   18,
+   23,
+   27,
+   28
+  ],
+  "bonus": 8,
+  "first": {
+   "winners": 9,
+   "prize": 3103164459
+  },
+  "sales": 116731227000,
+  "firstType": {
+   "auto": 9,
+   "semi": 0,
+   "manual": 0
+  },
+  "status": "COMPLETE",
+  "source": "seed:gerosyab+smok95+testrapod"
+ },
+ "count": 1250,
+ "nextRound": 1251,
+ "nextDrawAt": "2026-11-21T20:35:00+09:00",
+ "updatedAt": "2026-11-18T12:00:00+09:00"
+}
