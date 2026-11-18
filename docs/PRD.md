@@ -193,7 +193,7 @@ http://m.dhlottery.co.kr/?v=0936m041720353943q071215303244m071113171829q01022225
 | 환경 | 엔진 |
 | :--- | :--- |
 | Android Chrome | `BarcodeDetector`(네이티브) 우선 |
-| iOS Safari, 기타 | **ZXing WASM**(`zxing-wasm`) 또는 `qr-scanner`. 스캔 화면에 들어갈 때 지연 로드 |
+| iOS Safari, 기타 | **jsQR**(v2.2 구현, 스캔·사진 읽기 때만 지연 로드, gzip 47KB) |
 | 공통 | `getUserMedia({ video: { facingMode: 'environment' } })`, HTTPS 필수, 초당 10~15프레임 디코딩, 손떨림 대비 동일 결과 2프레임 연속 시 확정 |
 
 ### 7.3 파서 레퍼런스 (TypeScript, 단위 테스트 통과 로직)
@@ -352,7 +352,7 @@ flowchart TB
     ETL -- ① 공식 --> DH[(동행복권 /lt645/selectPstLt645InfoNew.do)]
     ETL -- ② 공식 실패 시 다수결 --> MIR[(미러 3곳<br/>smok95 · Testrapod · gerosyab)]
     ETL --> VAL{검증<br/>범위·중복·연속성·토요일<br/>저장값과 충돌 여부}
-    VAL -- 통과 --> RECHK[저장 데이터 재검증] --> COMMIT[public/data 커밋·푸시] --> CF[Cloudflare Pages 자동 배포]
+    VAL -- 통과 --> RECHK[저장 데이터 재검증] --> COMMIT[public/data 커밋·푸시] --> CF[Cloudflare Workers 자동 배포]
     VAL -- 실패 --> ISSUE[GitHub Issue 자동 생성<br/>label: data-pipeline]
     CF --> APP[PWA 클라이언트<br/>통계는 클라이언트에서 계산]
 ```
@@ -410,7 +410,7 @@ stateDiagram-v2
 | Stage 2. 백스톱 ① | 일 09:07 | `7 0 * * 0` | 미확정 재수집. 이 시각에는 미러 3곳도 모두 갱신된 상태라 공식 장애 시에도 다수결 확정 가능 |
 | Stage 3. 백스톱 ② | 월 09:07 | `7 0 * * 1` | 최종 재시도. **추첨 후 36시간이 지나도 미확정이면 exit 1 → Issue 알림** |
 | Stage 4. 검증 | 수집 직후 | – | 실행 전 단위·무결성 테스트, 수집 후 저장 데이터 재검증(1회부터 연속, 알려진 회차 값, 외부 통계 일치). **재검증을 통과한 경우에만 커밋** |
-| Stage 5. 배포 | 변경이 있을 때만 | – | `public/data/*` 커밋(`pull --rebase` 후 push) → Cloudflare Pages 자동 배포 |
+| Stage 5. 배포 | 변경이 있을 때만 | – | `public/data/*` 커밋(`pull --rebase` 후 push) → Cloudflare Workers 자동 배포 |
 
 > GitHub 스케줄은 혼잡 시 지연이 크다. 참고 사례인 Testrapod는 21:17 예약 실행의 커밋이 수 시간 뒤에 기록되었다. 10분 간격 다중 실행과 백스톱으로 보완한다. **예약 실행은 기본 브랜치(main)에 있을 때만 동작**한다.
 
@@ -418,13 +418,14 @@ stateDiagram-v2
 
 구현 파일: [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)
 
-| 스텝 | 조건 | 내용 |
+| 작업 | 실행 조건 | 내용 |
 | :--- | :--- | :--- |
-| Unit & data integrity tests | 항상(PR 포함) | `python -m unittest discover -s scripts`(13개 테스트) |
-| Run ETL | PR 제외 | `scripts/update_lotto.py`(수동 실행에서 `seed=true`면 `--seed`) |
-| Re-check data | ETL이 실행된 경우(SLA 실패 포함) | 저장 데이터 무결성 재검증 |
-| Commit & push | 재검증 성공 시에만 | 변경이 있을 때만 커밋 |
-| Open issue | 예약 실행 실패 시 | `data-pipeline` 라벨 이슈 생성(열린 이슈가 있으면 생략) |
+| `check` | main 푸시·PR | `npm ci` → `npm test`(계산 로직 19개 + 수집·데이터 13개) → `npm run build` |
+| `collect` › 수집 전 테스트 | 예약·수동 실행 | `python -m unittest discover -s scripts` |
+| `collect` › 수집 | 〃 | `scripts/update_lotto.py`(수동 실행에서 `seed=true`면 `--seed`) |
+| `collect` › 수집 후 데이터 재검증 | ETL이 실행된 경우(SLA 실패 포함) | 저장 데이터 무결성 재검증(`StoredDataTests`) |
+| `collect` › 커밋·푸시 | 재검증 성공 시에만 | 변경이 있을 때만 커밋 `data: 로또 제N회 반영` |
+| `collect` › 실패 알림 | 예약 실행 실패 시 | `data-pipeline` 라벨 이슈 생성(열린 이슈가 있으면 생략) |
 
 **ETL 종료 코드**: `0` 정상(추첨 전이라 아직 데이터가 없는 경우 포함), `1` SLA 위반(수집분은 커밋), `2` 검증 실패(데이터 미반영).
 
@@ -526,7 +527,7 @@ stateDiagram-v2
 | **Phase 3: 생성기** | D+5 ~ D+6주 | FR-13~14: 필터 생성기, 역대 대조, 희소성 점수(인기도 지수 기반 보정) |
 | **차기** | 지표 확인 후 | FR-17(Web Push, 동기화, 익명 전체 통계) |
 
-**권장 기술 스택**: Vite + React(또는 Preact) + TypeScript, `vite-plugin-pwa`, Dexie(IndexedDB), `zxing-wasm`, 차트는 경량 SVG 컴포넌트, 호스팅은 Cloudflare Pages, 데이터 파이프라인은 Python 3.12 표준 라이브러리.
+**기술 스택(v2.2 구현)**: Vite 5 + React 18 + TypeScript, localStorage, `jsqr`(지연 로드), 차트는 SVG 직접 구현, 호스팅은 Cloudflare Workers 정적 자산, 데이터 파이프라인은 Python 3.12 표준 라이브러리. PWA(`vite-plugin-pwa`)는 Phase 2.
 
 ---
 
