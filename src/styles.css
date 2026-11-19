@@ -1,11 +1,11 @@
 /* Hallmark · shape: Workbench · genre: editorial · theme: Vellum (by request) · job: try · draw: manual
- * hero: band · nav: bottom tab bar · footer: ruled colophon · imagery: none · signature: the marking-slip ledger, every number's count printed in its own cell · vellum: parchment / oxblood reversed
+ * hero: band · nav: bottom tab bar · footer: ruled colophon · imagery: none · signature: the marking-slip ledger, every number's count printed in its own cell · vellum: parchment light / navy dashboard dark (by request)
  * axes: light/grotesque/cool · posture: committed · contrast: pass · fold: pass · v2.0.0 */
 /* Hallmark · pre-emit critique: P4 H4 E4 S4 R4 V4 · weakest: H, the hero is a data band not a photograph; kept because the latest draw's balls are the product's strongest real thing */
 /* Hallmark · waive 28b · the scanner video is the live QR camera preview in this theme and nothing exists to show before the camera starts · the camera button fills the scanner until then */
 /*
  * 로또 데이터 실험실 디자인 토큰 — 「인쇄소의 당첨 장부」 (hallmark Vellum 테마 기반)
- * 양피지 바탕, 엄버 잉크, 가는 실선, 군청 안료 하나. 어두운 화면은 옥스블러드 바탕 + 금박 안료.
+ * 양피지 바탕, 엄버 잉크, 가는 실선, 군청 안료 하나. 어두운 화면은 남색 대시보드(남색 바탕 + 시안 안료, 둥근 카드 — 2026-11-19 사용자 결정).
  * 글꼴은 Pretendard 한 가족(2026-11-19 사용자 결정 A안: 한글·영문·숫자 같은 설계, 위계는 굵기와 크기로).
  * 공 색(공식 5색)은 번호 표시에만 쓴다. 규칙: docs/DESIGN_SYSTEM.md
  */
@@ -58,6 +58,15 @@
   --step-4: 2.375rem;
   --step-5: 3rem;
   --radius: 2px;
+  --radius-card: 2px;
+  --sheet-top: var(--ink);       /* 낱장 위 잉크 선 */
+  --stage-top: var(--line-strong);
+  --stage-bottom: var(--ink);
+  --stage-side: transparent;
+  --seg-gap: 0px;               /* 고르기 버튼: 라이트는 붙은 네모 칸 */
+  --seg-overlap: -1px;
+  --seg-radius: 0px;
+  --seg-edge: var(--ink);
   --tap: 44px;
   --rule-hair: 1px;
   --dur-micro: 160ms;
@@ -67,56 +76,76 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    --bg: #490c13;          /* 옥스블러드 */
-    --surface: #531a1e;
-    --surface-2: #5d2729;
-    --line: #793f40;
-    --line-strong: #dacfbf;
-    --ink: #f2eadd;
-    --ink-2: #dacfbf;
-    --muted: #c3b0a2;
-    --mark-rgb: 242, 234, 221;
-    --accent: #ebc573;      /* 금박 */
-    --accent-deep: #d8ac4f;
-    --accent-soft: #673a2a;
-    --accent-ink: #490c13;
-    --accent-rgb: 235, 197, 115;
+    --bg: #0b1426;          /* 남색 밤 */
+    --surface: #111d35;     /* 카드 */
+    --surface-2: #16264a;   /* 띠·우물 */
+    --line: #24365e;
+    --line-strong: #3a5288;
+    --ink: #e8eefc;
+    --ink-2: #c6d2ee;
+    --muted: #8ea0c8;
+    --mark-rgb: 232, 238, 252;
+    --accent: #4cc9f0;      /* 시안 — 주 동작·선택·포커스 */
+    --accent-deep: #2fb2db;
+    --accent-soft: #12345a;
+    --accent-ink: #06121f;
+    --accent-rgb: 76, 201, 240;
     --win: #9fd6a6;
-    --win-soft: #2c3a24;
-    --series-1: #b48c2b;
-    --series-2: #6280da;
-    --series-3: #b25196;
+    --win-soft: #173a2c;
+    --series-1: #1d9fd0;    /* dataviz 검증 통과 (표면 #111d35) */
+    --series-2: #cf7a26;
+    --series-3: #9468dc;
     --ball-4: #8d909e;
-    --rank-top: #ff6f61;
-    --rank-next: #f2c94c;
-    --rank-next-ink: #f2c94c;
+    --rank-top: #ff6b6b;
+    --rank-next: #ffd166;
+    --rank-next-ink: #ffd166;
+    --radius: 10px;         /* 다크는 대시보드 카드: 둥근 모서리 */
+    --radius-card: 12px;
+    --sheet-top: var(--line);
+    --stage-top: var(--line);
+    --stage-bottom: var(--line);
+    --stage-side: var(--line);
+    --seg-gap: 8px;
+    --seg-overlap: 0px;
+    --seg-radius: var(--radius);
+    --seg-edge: var(--line-strong);
   }
 }
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --bg: #490c13;
-  --surface: #531a1e;
-  --surface-2: #5d2729;
-  --line: #793f40;
-  --line-strong: #dacfbf;
-  --ink: #f2eadd;
-  --ink-2: #dacfbf;
-  --muted: #c3b0a2;
-  --mark-rgb: 242, 234, 221;
-  --accent: #ebc573;
-  --accent-deep: #d8ac4f;
-  --accent-soft: #673a2a;
-  --accent-ink: #490c13;
-  --accent-rgb: 235, 197, 115;
+  --bg: #0b1426;          /* 남색 밤 */
+  --surface: #111d35;     /* 카드 */
+  --surface-2: #16264a;   /* 띠·우물 */
+  --line: #24365e;
+  --line-strong: #3a5288;
+  --ink: #e8eefc;
+  --ink-2: #c6d2ee;
+  --muted: #8ea0c8;
+  --mark-rgb: 232, 238, 252;
+  --accent: #4cc9f0;      /* 시안 — 주 동작·선택·포커스 */
+  --accent-deep: #2fb2db;
+  --accent-soft: #12345a;
+  --accent-ink: #06121f;
+  --accent-rgb: 76, 201, 240;
   --win: #9fd6a6;
-  --win-soft: #2c3a24;
-  --series-1: #b48c2b;
-  --series-2: #6280da;
-  --series-3: #b25196;
+  --win-soft: #173a2c;
+  --series-1: #1d9fd0;    /* dataviz 검증 통과 (표면 #111d35) */
+  --series-2: #cf7a26;
+  --series-3: #9468dc;
   --ball-4: #8d909e;
-  --rank-top: #ff6f61;
-  --rank-next: #f2c94c;
-  --rank-next-ink: #f2c94c;
+  --rank-top: #ff6b6b;
+  --rank-next: #ffd166;
+  --rank-next-ink: #ffd166;
+  --radius: 10px;         /* 다크는 대시보드 카드: 둥근 모서리 */
+  --radius-card: 12px;
+  --sheet-top: var(--line);
+  --stage-top: var(--line);
+  --stage-bottom: var(--line);
+  --stage-side: var(--line);
+  --seg-gap: 8px;
+  --seg-overlap: 0px;
+  --seg-radius: var(--radius);
+  --seg-edge: var(--line-strong);
 }
 
 /* ---------------------------------------------------------------- 전역 */
@@ -346,8 +375,8 @@ main {
 .sheet {
   background: var(--surface);
   border: var(--rule-hair) solid var(--line);
-  border-top: var(--rule-hair) solid var(--ink);
-  border-radius: var(--radius);
+  border-top: var(--rule-hair) solid var(--sheet-top);
+  border-radius: var(--radius-card);
   padding: 20px;
 }
 .sheet-head {
@@ -436,13 +465,14 @@ main {
 .seg {
   display: inline-flex;
   flex-wrap: wrap;
+  gap: var(--seg-gap);
 }
 .seg button {
   min-height: 40px;
   padding: 0 16px;
-  margin: 0 -1px -1px 0;
-  border: var(--rule-hair) solid var(--ink);
-  border-radius: 0;
+  margin: 0 var(--seg-overlap) var(--seg-overlap) 0;
+  border: var(--rule-hair) solid var(--seg-edge);
+  border-radius: var(--seg-radius);
   background: var(--surface);
   font-weight: 500;
   font-size: var(--step--1);
@@ -519,10 +549,11 @@ main {
 /* ---------------------------------------------------------------- 홈: 최신 회차 띠 */
 .stage {
   padding: 24px 20px 20px;
-  border-radius: var(--radius);
+  border-radius: var(--radius-card);
   background: var(--surface-2);
-  border-top: var(--rule-hair) solid var(--line-strong);
-  border-bottom: var(--rule-hair) solid var(--ink);
+  border: var(--rule-hair) solid var(--stage-side);
+  border-top-color: var(--stage-top);
+  border-bottom-color: var(--stage-bottom);
 }
 .stage-title {
   display: flex;

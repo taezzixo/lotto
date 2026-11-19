@@ -37,13 +37,13 @@ const ball = (n, extra = '') => `<span class="ball g${group(n)}${extra}">${n}</s
 
 const CSS = `
 :root{--bg:#f3eada;--surface:#f9f3e8;--surface-2:#e9dcc7;--line:#bcab96;--ink:#261a12;--ink-2:#3a2d24;--muted:#62554a;--accent:#2942ab;--accent-ink:#f5eee0;
---b1:#e8b512;--b1i:#2a1d00;--b2:#2f6fd0;--b3:#d6423f;--b4:#7f8291;--b5:#2c9a5c;color-scheme:light}
-@media (prefers-color-scheme:dark){:root{--bg:#490c13;--surface:#531a1e;--surface-2:#5d2729;--line:#793f40;--ink:#f2eadd;--ink-2:#dacfbf;--muted:#c3b0a2;--accent:#ebc573;--accent-ink:#490c13;--b4:#8d909e;color-scheme:dark}}
+--b1:#e8b512;--b1i:#2a1d00;--b2:#2f6fd0;--b3:#d6423f;--b4:#7f8291;--b5:#2c9a5c;--r:2px;--top:var(--ink);color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0b1426;--surface:#111d35;--surface-2:#16264a;--line:#24365e;--ink:#e8eefc;--ink-2:#c6d2ee;--muted:#8ea0c8;--accent:#4cc9f0;--accent-ink:#06121f;--b4:#8d909e;--r:12px;--top:var(--line);color-scheme:dark}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 'Pretendard Variable',Pretendard,-apple-system,system-ui,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;word-break:keep-all}
 .wrap{max-width:760px;margin:0 auto;padding:16px max(16px,env(safe-area-inset-right)) 48px max(16px,env(safe-area-inset-left))}
 a{color:var(--accent);text-underline-offset:3px}header{padding-bottom:8px;border-bottom:1px solid var(--ink)}header a{color:var(--ink);font-weight:700;font-size:1.1rem;text-decoration:none}
-.sheet{background:var(--surface);border:1px solid var(--line);border-top:1px solid var(--ink);border-radius:2px;padding:20px;margin-top:16px}
-.sheet.lead{background:var(--surface-2);border-top:1px solid var(--ink)}
+.sheet{background:var(--surface);border:1px solid var(--line);border-top:1px solid var(--top);border-radius:var(--r);padding:20px;margin-top:16px}
+.sheet.lead{background:var(--surface-2)}
 h1{margin:0;font-size:1.9rem;line-height:1.2;font-weight:800;letter-spacing:-.03em}h2{margin:0 0 8px;font-size:1.15rem;font-weight:700;letter-spacing:-.02em}
 .muted{color:var(--muted)}.balls{display:flex;flex-wrap:wrap;gap:clamp(4px,1.4vw,8px);align-items:center;margin:16px 0}
 .ball{display:inline-grid;place-items:center;width:clamp(32px,9.4vw,46px);height:clamp(32px,9.4vw,46px);border-radius:50%;font-weight:700;font-size:clamp(13px,4vw,19px);color:#fff;
