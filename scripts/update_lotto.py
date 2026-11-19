@@ -328,6 +328,53 @@ def seed(now: dt.datetime) -> list[dict]:
     return draws
 
 
+def verify_latest(draws: list[dict], now: dt.datetime) -> str:
+    """매 실행마다 저장된 최신 확정 회차를 공식 소스로 다시 대조한다.
+    공식 엔드포인트가 살아 있는지 확인하고, 1등 집계 정정을 반영한다. 번호가 다르면 중단."""
+    if not draws or draws[-1]["status"] != "COMPLETE":
+        return "건너뜀(최신 회차 미확정)"
+    last = draws[-1]
+    for name, fn in OFFICIAL:
+        if name in DOWN:
+            continue
+        try:
+            rec = fn(last["no"])
+        except NotYetDrawn:
+            return f"{name}: 응답에 제{last['no']}회 없음"
+        except SourceError as e:
+            DOWN.add(name)
+            print(f"::warning::공식 소스 확인 실패 → {e}")
+            return f"{name}: 실패 ({e})"
+        if _key(rec) != _key(last):
+            raise ValidationError(f"{last['no']}회 공식 값과 저장값의 번호가 다름 → 수동 검토 필요")
+        if (rec["first"], rec["sales"]) != (last["first"], last["sales"]) and _first_final(rec, now):
+            print(f"::notice::{last['no']}회 1등 집계 정정 반영: {last['first']} → {rec['first']}")
+            last.update(first=rec["first"], sales=rec["sales"])
+        return f"{name}: 정상 (제{last['no']}회 일치)"
+    return "공식 소스 없음"
+
+
+def write_summary(draws: list[dict], official: str, target: int) -> None:
+    path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if not path or not draws:
+        return
+    last = draws[-1]
+    lines = [
+        "### 로또 데이터 수집 결과",
+        "",
+        "| 항목 | 값 |",
+        "| --- | --- |",
+        f"| 최신 회차 | 제{last['no']}회 ({last['date']}) {last['status']} · {last['source']} |",
+        f"| 당첨번호 | {', '.join(map(str, last['nums']))} + {last['bonus']} |",
+        f"| 1등 | {last['first']['winners']}명, 1인당 {last['first']['prize']:,}원 |",
+        f"| 추첨이 끝났어야 하는 회차 | 제{target}회 |",
+        f"| 공식 소스 확인 | {official} |",
+        f"| 이번 실행에서 실패한 소스 | {', '.join(sorted(DOWN)) or '없음'} |",
+    ]
+    with open(path, "a", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+
+
 def run(now: dt.datetime, do_seed: bool = False, max_recheck: int = 30) -> int:
     draws = seed(now) if do_seed else load()
     for i, d in enumerate(draws):
@@ -354,10 +401,15 @@ def run(now: dt.datetime, do_seed: bool = False, max_recheck: int = 30) -> int:
         draws.append(rec)
         print(f"{no}회 수집: {rec['nums']}+{rec['bonus']} 1등 {rec['first']['winners']}명 [{rec['status']}/{rec['source']}]")
 
+    # 3) 최신 확정 회차를 공식 소스로 재확인(엔드포인트 생존·정정 감지)
+    official = verify_latest(draws, now)
+    print(f"공식 소스 확인: {official}")
+
     if draws:
         save(draws, now)
+    write_summary(draws, official, target)
 
-    # 3) SLA: 추첨 후 36시간이 지났는데 미수집·미확정이면 실패(→ 이슈 알림)
+    # 4) SLA: 추첨 후 36시간이 지났는데 미수집·미확정이면 실패(→ 이슈 알림)
     last_due = FIRST_DRAW_AT + WEEK * (target - 1)
     behind = not draws or draws[-1]["no"] < target or draws[-1]["status"] != "COMPLETE"
     if behind and now - last_due > SLA_LIMIT:

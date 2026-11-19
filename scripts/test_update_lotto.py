@@ -195,6 +195,40 @@ class RunTests(unittest.TestCase):
         self.assertEqual((latest["latest"]["no"], latest["latest"]["status"], latest["nextRound"]), (4, "COMPLETE", 5))
 
 
+
+class VerifyLatestTests(unittest.TestCase):
+    def setUp(self):
+        self.src = FakeSources()
+        U.http_get = self.src
+        U.DOWN.clear()
+        self.nums, self.bonus = [3, 9, 17, 22, 38, 44], 12
+        self.no = 1251
+        self.stored = [U._rec(self.no, draw_at(self.no).date().isoformat(), self.nums, self.bonus, 10, 2_000_000_000, 10**11) | {"status": "COMPLETE", "source": "dhlottery"}]
+        self.now = draw_at(self.no) + dt.timedelta(days=2)
+
+    def verify(self):
+        with redirect_stdout(io.StringIO()):
+            return U.verify_latest(self.stored, self.now)
+
+    def test_official_matches(self):
+        self.src.official[self.no] = official_row(self.no, self.nums, self.bonus)
+        self.assertIn("정상", self.verify())
+
+    def test_first_prize_correction_applied(self):
+        self.src.official[self.no] = official_row(self.no, self.nums, self.bonus, winners=11, prize=1_900_000_000)
+        self.verify()
+        self.assertEqual(self.stored[-1]["first"], {"winners": 11, "prize": 1_900_000_000})
+
+    def test_number_mismatch_raises(self):
+        self.src.official[self.no] = official_row(self.no, [1, 2, 3, 4, 5, 6], self.bonus)
+        with self.assertRaises(U.ValidationError):
+            self.verify()
+
+    def test_official_down_is_reported_not_fatal(self):
+        self.src.down.add("official")
+        self.assertIn("실패", self.verify())
+
+
 class StoredDataTests(unittest.TestCase):
     """커밋된 public/data/draws.json 무결성."""
 
