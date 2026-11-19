@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react';
 import type { AppData } from '../App.tsx';
-import { bandShare, firstPrizeSummary, frequency, gaps, inPeriod, popularityByBirthdayCount, ranked, yearlyFirstPrize, type Period } from '../lib/stats.ts';
+import { bandShare, firstPrizeSummary, frequency, gaps, inPeriod, popularityByBirthdayCount, rankTable, ranked, yearlyFirstPrize, type Period } from '../lib/stats.ts';
 import { dateKo, pct, won, wonShort } from '../lib/format.ts';
 import { Ball } from './Ball.tsx';
-import { Slip, SlipLegend } from './Slip.tsx';
 import { BarChart, Legend } from './Charts.tsx';
 
 const PERIODS: { id: Period; label: string }[] = [
@@ -20,8 +19,8 @@ export function Stats({ data }: { data: AppData }) {
   const scoped = useMemo(() => inPeriod(data.draws, period), [data.draws, period]);
   const freq = useMemo(() => frequency(scoped, withBonus), [scoped, withBonus]);
   const gap = useMemo(() => gaps(data.draws, withBonus), [data.draws, withBonus]);
-  const top = ranked(freq, 'desc');
-  const rankOf = (n: number) => top.findIndex((r) => r.n === n) + 1;
+  const table = useMemo(() => rankTable(freq), [freq]);
+  const rankOf = (n: number) => table.find((r) => r.n === n)?.rank ?? 0;
   const bands = useMemo(() => bandShare(scoped, withBonus), [scoped, withBonus]);
   const first = useMemo(() => firstPrizeSummary(data.draws), [data.draws]);
   const yearly = useMemo(() => yearlyFirstPrize(data.draws), [data.draws]);
@@ -34,7 +33,7 @@ export function Stats({ data }: { data: AppData }) {
       <header className="view-head">
         <h2>번호 통계</h2>
         <p>
-          {scopeLabel} 당첨번호 {scoped.length}회를 모았어요. 칸이 진할수록 많이 나온 번호예요.
+          {scopeLabel} 당첨번호 {scoped.length}회를 모았어요. 번호를 누르면 아래에 자세히 보여요.
         </p>
       </header>
 
@@ -52,21 +51,58 @@ export function Stats({ data }: { data: AppData }) {
         </label>
       </div>
 
+      <section className="sheet" aria-labelledby="order-title">
+        <div className="sheet-head">
+          <h3 id="order-title">출현 순위 1~45위</h3>
+          <p className="rank-key">
+            <span className="key top">1~6위</span>
+            <span className="key next">7~10위</span>
+          </p>
+        </div>
+        <ol className="rank-grid" aria-label={`${scopeLabel} 번호별 출현 순위`}>
+          {table.map((r) => (
+            <li key={r.n}>
+              <button
+                type="button"
+                className={`rank-cell${r.rank <= 6 ? ' top' : r.rank <= 10 ? ' next' : ''}`}
+                aria-pressed={sel === r.n}
+                aria-label={`${r.rank}위 ${r.n}번 ${r.value}회`}
+                onClick={() => setSel(r.n)}
+              >
+                <span className="rk">{r.rank}위</span>
+                <Ball n={r.n} />
+                <span className="ct">{r.value}회</span>
+              </button>
+            </li>
+          ))}
+        </ol>
+      </section>
+
       <div className="grid-2">
-        <section className="sheet" aria-labelledby="slip-title">
+        <section className="sheet" aria-labelledby="gap-title">
           <div className="sheet-head">
-            <h3 id="slip-title">번호별 출현 횟수</h3>
-            <p>번호를 누르면 자세히 보여요</p>
+            <h3 id="gap-title">오래 쉰 번호</h3>
+            <p>마지막으로 나온 뒤 지난 회차</p>
           </div>
-          <Slip
-            mode="heat"
-            values={freq}
-            selected={[sel]}
-            onPick={setSel}
-            label={`${scopeLabel} 번호별 출현 횟수`}
-            valueLabel={(n, v) => `${n}번 ${v}회`}
-          />
-          <SlipLegend low={`${Math.min(...freq.slice(1))}회`} high={`${Math.max(...freq.slice(1))}회`} />
+          <ol className="gap-row">
+            {ranked(gap, 'desc')
+              .slice(0, 6)
+              .map((r) => (
+                <li key={r.n}>
+                  <button type="button" className="gap-cell" aria-pressed={sel === r.n} onClick={() => setSel(r.n)} aria-label={`${r.n}번 ${r.value}회째 안 나옴`}>
+                    <Ball n={r.n} />
+                    <span>{r.value}회째</span>
+                  </button>
+                </li>
+              ))}
+          </ol>
+        </section>
+
+        <section className="sheet" aria-labelledby="detail-title">
+          <div className="sheet-head">
+            <h3 id="detail-title">{sel}번 자세히</h3>
+            <p>위 순위표나 오래 쉰 번호를 누르세요</p>
+          </div>
           <div className="detail" aria-live="polite">
             <Ball n={sel} />
             <dl>
@@ -79,34 +115,27 @@ export function Stats({ data }: { data: AppData }) {
             </dl>
           </div>
         </section>
-
-        <section className="sheet" aria-labelledby="rank-title">
-          <div className="sheet-head">
-            <h3 id="rank-title">번호 순위</h3>
-          </div>
-          <div className="rank-cols">
-            <RankList title="많이 나온 번호" rows={top.slice(0, 6)} unit="회" />
-            <RankList title="적게 나온 번호" rows={ranked(freq, 'asc').slice(0, 6)} unit="회" />
-            <RankList title="오래 쉰 번호" rows={ranked(gap, 'desc').slice(0, 6)} unit="회째" />
-          </div>
-          <div style={{ marginTop: 18 }}>
-            <h3 style={{ fontSize: 'var(--step-0)' }}>번호대별 비중 (5개 단위)</h3>
-            <BarChart
-              ariaLabel="번호대별 출현 비중과 기대 비중"
-              height={170}
-              data={bands.map((b) => ({ key: b.label, label: b.label, value: b.share, marker: b.expected, tip: `${b.label}: ${pct(b.share)} (번호 수로 기대되는 비중 ${pct(b.expected)})` }))}
-              format={(v) => pct(v, 0)}
-              valueLabels
-            />
-            <Legend
-              items={[
-                { label: '실제 비중', color: 'var(--series-1)' },
-                { label: '번호 수로 기대되는 비중', color: 'var(--series-2)', line: true },
-              ]}
-            />
-          </div>
-        </section>
       </div>
+
+      <section className="sheet" aria-labelledby="band-title">
+        <div className="sheet-head">
+          <h3 id="band-title">번호대별 비중 (5개 단위)</h3>
+          <p>{scopeLabel}</p>
+        </div>
+        <BarChart
+          ariaLabel="번호대별 출현 비중과 기대 비중"
+          height={190}
+          data={bands.map((b) => ({ key: b.label, label: b.label, value: b.share, marker: b.expected, tip: `${b.label}: ${pct(b.share)} (번호 수로 기대되는 비중 ${pct(b.expected)})` }))}
+          format={(v) => pct(v, 0)}
+          valueLabels
+        />
+        <Legend
+          items={[
+            { label: '실제 비중', color: 'var(--series-1)' },
+            { label: '번호 수로 기대되는 비중', color: 'var(--series-2)', line: true },
+          ]}
+        />
+      </section>
 
       <header className="view-head" style={{ marginTop: 10 }}>
         <h2>1등 데이터</h2>
@@ -242,25 +271,6 @@ export function Stats({ data }: { data: AppData }) {
           </div>
         </details>
       </section>
-    </div>
-  );
-}
-
-function RankList({ title, rows, unit }: { title: string; rows: { n: number; value: number }[]; unit: string }) {
-  return (
-    <div>
-      <h3>{title}</h3>
-      <ol className="rank-list">
-        {rows.map((r) => (
-          <li key={r.n}>
-            <Ball n={r.n} />
-            <span className="num">
-              {r.value}
-              {unit}
-            </span>
-          </li>
-        ))}
-      </ol>
     </div>
   );
 }

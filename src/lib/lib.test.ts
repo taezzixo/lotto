@@ -238,3 +238,13 @@ test('추첨 직후 대체 조회: 필요한 회차 판단과 미러 응답 검�
   const broken = (async () => { throw new TypeError('CORS'); }) as unknown as typeof fetch;
   assert.equal(await fetchFallback(1251, broken), null);
 });
+
+test('출현 순위표: 45개, 공동 순위', async () => {
+  const { rankTable } = await import('./stats.ts');
+  const t = rankTable(frequency(draws.filter((d) => d.no <= 1250), false));
+  assert.equal(t.length, 45);
+  assert.deepEqual(t[0], { n: 34, value: 188, rank: 1 });
+  // 13·27번 모두 184회 → 둘 다 2위, 다음은 4위
+  assert.deepEqual(t.slice(1, 4).map((r) => [r.n, r.rank]), [[13, 2], [27, 2], [18, 4]]);
+  assert.ok(t.every((r, i) => i === 0 || r.value <= t[i - 1].value));
+});

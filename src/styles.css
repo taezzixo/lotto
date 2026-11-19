@@ -43,6 +43,9 @@
   --scrim: rgba(18, 12, 8, 0.55);
   --ball-sheen: rgba(255, 255, 255, 0.28);
   --mask-solid: #000;
+  --rank-top: #c0392b;    /* 출현 1~6위 붉은 테두리 */
+  --rank-next: #d9a514;   /* 출현 7~10위 노란 테두리 */
+  --rank-next-ink: #8a6400;
   --fibre: 0.5;
   --ball-1: #e8b512; --ball-1-ink: #2a1d00;  /* 1~10 */
   --ball-2: #2f6fd0; --ball-2-ink: #ffffff;  /* 11~20 */
@@ -92,6 +95,9 @@
     --series-3: #b25196;
     --fibre: 0.25;
     --ball-4: #8d909e;
+    --rank-top: #ff6f61;
+    --rank-next: #f2c94c;
+    --rank-next-ink: #f2c94c;
   }
 }
 :root[data-theme='dark'] {
@@ -117,6 +123,9 @@
   --series-3: #b25196;
   --fibre: 0.25;
   --ball-4: #8d909e;
+  --rank-top: #ff6f61;
+  --rank-next: #f2c94c;
+  --rank-next-ink: #f2c94c;
 }
 
 /* ---------------------------------------------------------------- 전역 */
@@ -1387,4 +1396,102 @@ details.table-toggle summary {
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* ---------------------------------------------------------------- 통계: 출현 순위표 1~45위 */
+.rank-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  gap: 6px;
+}
+.rank-cell {
+  width: 100%;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 6px 2px 7px;
+  border: var(--rule-hair) solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.rank-cell .ball {
+  --size: 36px;
+}
+.rank-cell .rk {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.rank-cell .ct {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.rank-cell.top {
+  border: 2px solid var(--rank-top);
+}
+.rank-cell.next {
+  border: 2px solid var(--rank-next);
+}
+.rank-cell.top .rk {
+  color: var(--rank-top);
+}
+.rank-cell.next .rk {
+  color: var(--rank-next-ink);
+}
+.rank-cell[aria-pressed='true'],
+.gap-cell[aria-pressed='true'] {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.rank-key {
+  display: flex;
+  gap: 10px;
+}
+.rank-key .key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.rank-key .key::before {
+  content: '';
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius);
+  border: 2px solid var(--c);
+}
+.rank-key .top {
+  --c: var(--rank-top);
+}
+.rank-key .next {
+  --c: var(--rank-next);
+}
+.gap-row {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 6px;
+}
+.gap-cell {
+  width: 100%;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 8px 2px;
+  border: var(--rule-hair) solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.gap-cell .ball {
+  --size: 36px;
 }

@@ -130,3 +130,15 @@ export function yearlyFirstPrize(draws: readonly Draw[]) {
     avgPrize: ds.filter((d) => d.first.winners).reduce((s, d) => s + d.first.prize, 0) / Math.max(1, ds.filter((d) => d.first.winners).length),
   }));
 }
+
+export interface RankRow {
+  n: number;
+  value: number;
+  rank: number; // 같은 값은 같은 순위 (1, 2, 2, 4 …)
+}
+
+/** 출현 횟수 순위표 1~45 (많은 순, 같으면 번호 순). 순위는 공동 순위 방식 */
+export function rankTable(values: readonly number[]): RankRow[] {
+  const rows = ranked(values, 'desc');
+  return rows.map((r) => ({ ...r, rank: rows.findIndex((x) => x.value === r.value) + 1 }));
+}

@@ -21,6 +21,7 @@
 | 안료 | `--accent` `--accent-deep` `--accent-soft` `--accent-ink` | 군청 `#2942ab` | 금박 `#ebc573` | 주 버튼, 선택, 포커스, 큰 지표 숫자, 인장(로고·배지). **안료는 하나** |
 | 당첨 | `--win` `--win-soft` | `#2f6b3f` | `#9fd6a6` | 등수 배지·축하 문구(항상 글자와 함께) |
 | 공 | `--ball-1`~`--ball-5` + `-ink` | 공식 공 색 | 회색만 밝게 | `Ball`에만 |
+| 순위 테두리 | `--rank-top` `--rank-next` | `#c0392b` / `#d9a514` | `#ff6f61` / `#f2c94c` | 출현 1~6위 / 7~10위 칸 테두리 |
 | 차트 | `--series-1` `--series-2` `--series-3` | `#3552bc` `#be7c1c` `#98397e` | `#b48c2b` `#6280da` `#b25196` | 차트 데이터만 (dataviz 검증 통과, 다크 3번은 대비 2.94라 범례에 값 직접 표기) |
 | 카메라 | `--frame` `--cam-*` | 테마 무관 | 테마 무관 | QR 카메라 화면 |
 | 섬유 결 | `--fibre` | 0.5 | 0.25 | `.fibre` 띠(홈 최신 회차)에만 |
@@ -41,7 +42,7 @@
 | `Ball.tsx` | 평판 인쇄 공(광택 없음), 내 번호 대조(일치=색, 불일치=빈 원, 보너스 일치=안료 고리) | `.ball.g1~g5` `.miss` `.bonus-hit` |
 | `Slip.tsx` | 마킹 용지 격자 7칸. `heat` 모드는 마킹 진하기 + **칸 아래 출현 횟수**(`.cnt`), `pick` 모드는 번호 고르기 | `.slip` `.cell` `.mark` `.cnt` |
 | `Charts.tsx` | SVG 막대 차트. 칸이 좁으면 x축 라벨을 자동으로 건너뜀(9구간 번호대 차트 대응) | `.chart` `.legend` `.tip` |
-| `Stats.tsx` | 번호대 비중은 **5개 단위 9구간**(1~5 … 41~45) | `.filters` `.seg` `.detail` |
+| `Stats.tsx` | 위에서부터 **출현 순위표 1~45위**(공 색 그대로, 1~6위 붉은 테두리·7~10위 노란 테두리, 같은 횟수는 공동 순위) → 오래 쉰 번호 + 번호 자세히 → **번호대 비중 5개 단위 9구간** | `.rank-grid` `.rank-cell.top/.next` `.gap-row` `.detail` |
 | `Home.tsx` | 최신 회차 띠(섬유 결 + 위 이중선) | `.stage.fibre` `.countdown` |
 | `Badges.tsx` | 배지: 획득 = 안료 인장, 미획득 = 점선 고리 진행도 | `.badges` `.coin` |
 | `ShareCard.tsx` | 공유 카드 PNG: 양피지 낱장 + 위 이중선 + 군청 인장, 테마 무관 | `.share-preview` |
