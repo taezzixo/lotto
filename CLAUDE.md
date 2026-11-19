@@ -1,4 +1,4 @@
-# CLAUDE.md — 로또랩 작업 가이드
+# CLAUDE.md — 로또 데이터 실험실 작업 가이드
 
 새 대화는 이 파일 → `docs/HANDOFF.md`(다음 할 일) 순서로 읽습니다.
 
@@ -22,4 +22,4 @@
 - 작업 브랜치에서 작업 → 테스트·빌드 통과 → 사용자 허락 후 `main` 반영.
 
 ## 기록
-GitHub `docs/`와 Notion 「대시보드 v1.0 / [로또랩] (lotto)」에 같은 내용을 둡니다. 문서를 바꾸면 Notion도 갱신하고 `docs/HANDOFF.md`의 업로드 기록을 남깁니다.
+GitHub `docs/`와 Notion 「대시보드 v1.0 / [로또 데이터 실험실] (lotto)」에 같은 내용을 둡니다. 문서를 바꾸면 Notion도 갱신하고 `docs/HANDOFF.md`의 업로드 기록을 남깁니다.

@@ -180,7 +180,7 @@ export function App() {
       <header className="topbar">
         <a className="wordmark" href="./" onClick={(e) => (e.preventDefault(), go('home'))}>
           <Logo />
-          로또랩
+          로또 데이터 실험실
         </a>
         <button className="icon-btn" type="button" onClick={toggleTheme} aria-label={isDark ? '밝은 화면으로 바꾸기' : '어두운 화면으로 바꾸기'}>
           {isDark ? <IconSun /> : <IconMoon />}

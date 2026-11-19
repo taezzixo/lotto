@@ -45,7 +45,7 @@ export function drawReminderIcs(round: number): string {
     `DTSTART:${fmt(start)}`,
     `DTEND:${fmt(end)}`,
     `SUMMARY:로또 제${round}회 결과 확인`,
-    'DESCRIPTION:로또랩을 열면 저장한 복권이 자동으로 채점됩니다.',
+    'DESCRIPTION:로또 데이터 실험실을 열면 저장한 복권이 자동으로 채점됩니다.',
     'BEGIN:VALARM',
     'TRIGGER:PT0M',
     'ACTION:DISPLAY',

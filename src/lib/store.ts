@@ -45,10 +45,10 @@ export function mergeImport(tickets: readonly Ticket[], json: string): { tickets
   try {
     data = JSON.parse(json);
   } catch {
-    throw new Error('JSON 파일이 아니에요. 로또랩에서 내보낸 파일을 골라 주세요.');
+    throw new Error('JSON 파일이 아니에요. 로또 데이터 실험실에서 내보낸 파일을 골라 주세요.');
   }
   const list = (data as StoreFile)?.tickets;
-  if (!Array.isArray(list)) throw new Error('로또랩 기록 파일이 아니에요.');
+  if (!Array.isArray(list)) throw new Error('로또 데이터 실험실 기록 파일이 아니에요.');
   let out = tickets.slice();
   let added = 0;
   let skipped = 0;

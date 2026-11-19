@@ -53,7 +53,7 @@ async function drawCard(rep: HitReport): Promise<Blob> {
   g.textAlign = 'left';
   g.textBaseline = 'alphabetic';
   g.font = `800 44px ${ko}`;
-  g.fillText('로또랩 나의 적중률', 230, 176);
+  g.fillText('로또 데이터 실험실 나의 적중률', 230, 176);
 
   // 운 지수
   g.fillStyle = muted;
@@ -157,7 +157,7 @@ export function ShareCard({ rep, onClose, onToast }: { rep: HitReport; onClose: 
   const share = async () => {
     if (!file) return;
     try {
-      await navigator.share({ files: [file], title: '로또랩 나의 적중률' });
+      await navigator.share({ files: [file], title: '로또 데이터 실험실 나의 적중률' });
     } catch (e) {
       if ((e as DOMException).name !== 'AbortError') onToast('공유하지 못했어요. 이미지 저장을 이용해 주세요.');
     }

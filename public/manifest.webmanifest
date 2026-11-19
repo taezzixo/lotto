@@ -1,6 +1,6 @@
 {
-  "name": "로또랩",
-  "short_name": "로또랩",
+  "name": "로또 데이터 실험실",
+  "short_name": "로또 실험실",
   "description": "종이 로또 QR을 찍으면 바로 채점하고 내 적중률을 쌓아 주는 무료 웹앱",
   "lang": "ko",
   "start_url": "./",
