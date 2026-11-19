@@ -191,3 +191,25 @@ test('금액·날짜 표기', () => {
   assert.equal(won(5_000), '5,000원');
   assert.equal(dateKo('2026-11-14'), '2026년 11월 14일');
 });
+
+test('배지: 조건별 획득', async () => {
+  const { computeBadges } = await import('./badges.ts');
+  const d = byNo.get(1250)!;
+  const mk = (id: string, round: number, nums: number[], type: 'auto' | 'manual' = 'auto', source: Ticket['source'] = 'qr'): Ticket => ({
+    id, source, round, createdAt: '2026-11-01T00:00:00Z', games: [{ slot: 'A', type, nums }],
+  });
+  const tickets = [1247, 1248, 1249, 1250].map((r, i) => mk(`t${i}`, r, [7, 14, 21, 28, 35, 42], 'manual'));
+  tickets.push(mk('w', 1250, [1, 5, 18, 23, 27, 40]), mk('b', 1250, [8, 9, 10, 11, 12, 13]), mk('pick', 1250, [1, 5, 18, 23, 27, 28], 'auto', 'analysis'));
+  const { graded } = gradeTickets(tickets, byNo);
+  const b = Object.fromEntries(computeBadges(tickets, graded, { backedUp: false }).map((x) => [x.id, x]));
+  assert.equal(b['first-scan'].earned, true);
+  assert.equal(b['streak-4'].earned, true);
+  assert.equal(b['same-4'].earned, true);
+  assert.equal(b['near-miss'].earned, true); // 5개 일치
+  assert.equal(b['near-miss'].round, 1250);
+  assert.equal(b['bonus-tease'].earned, true); // 8 = 1250회 보너스
+  assert.equal(b['first-win'].earned, true);
+  assert.equal(b['club-100'].earned, false);
+  assert.equal(b['backup'].earned, false);
+  assert.ok(d.bonus === 8);
+});

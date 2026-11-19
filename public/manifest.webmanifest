@@ -1,0 +1,16 @@
+{
+  "name": "로또랩",
+  "short_name": "로또랩",
+  "description": "종이 로또 QR을 찍으면 바로 채점하고 내 적중률을 쌓아 주는 무료 웹앱",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#eceef5",
+  "theme_color": "#cf2f68",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

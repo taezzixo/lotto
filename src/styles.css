@@ -1246,3 +1246,82 @@ details.table-toggle summary {
   bottom: auto;
   top: max(12px, env(safe-area-inset-top));
 }
+
+/* ---------------------------------------------------------------- 배지 진열장 */
+.badges {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px 12px;
+}
+.badges li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.coin {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+}
+.earned .coin {
+  color: var(--slip-ink);
+  background: radial-gradient(circle at 34% 28%, var(--slip-hi), var(--slip) 55%, var(--slip-lo));
+  box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.18), 0 2px 6px -2px rgba(var(--slip-rgb), 0.6);
+}
+.earned .coin svg {
+  width: 24px;
+  height: 24px;
+}
+.locked .coin {
+  color: var(--muted);
+  background: conic-gradient(rgba(var(--slip-rgb), 0.55) calc(var(--p) * 360deg), transparent 0) border-box;
+  -webkit-mask: radial-gradient(circle, transparent 0 18px, #000 19px);
+  mask: radial-gradient(circle, transparent 0 18px, #000 19px);
+  position: relative;
+}
+.locked .coin::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px dashed var(--line-strong);
+}
+.locked .coin .pct {
+  display: none;
+}
+.badge-text {
+  display: grid;
+  min-width: 0;
+  line-height: 1.35;
+}
+.badge-text b {
+  font-size: var(--step-0);
+}
+.badge-text span {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.locked .badge-text b {
+  color: var(--ink-2);
+}
+.share-preview {
+  margin-top: 14px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+  min-height: 200px;
+}
+.share-preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+}

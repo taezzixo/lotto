@@ -43,6 +43,9 @@
 | `Analysis.tsx` | 전략 4종 분석 번호, 주간 적중 기록·비교 | `.verdict` `table.data` |
 | `Records.tsx` | 운 지수, 일치 분포, 저장한 복권, 백업 | `.luck` `.round-group` `.ticket` |
 | `ResultSheet.tsx` | 스캔 직후 결과 시트, 추첨 뒤 새 결과 알림 | `.overlay` `.result` `.game-rows` `.celebrate` |
+| `Badges.tsx` | 배지 진열장: 획득 = 분홍 동전 + 체크, 미획득 = 점선 고리에 진행도(conic) | `.badges` `.coin` `.earned` `.locked` |
+| `ShareCard.tsx` | 공유 카드 PNG(캔버스). 테마와 무관하게 용지 색 고정, 번호·일련번호 미포함 | `.share-preview` |
+| `InstallCard.tsx` | 홈 화면 추가 안내(복권 2장 이상, 다시 보지 않기) | `.install` |
 | `Icons.tsx` | 인라인 SVG 아이콘(`currentColor`), 로고 | — |
 
 공통 패턴
@@ -59,7 +62,7 @@
 
 ## 4. 에셋·아이콘
 
-- 이미지 에셋 없음. 공·로고·아이콘은 CSS 그라데이션과 인라인 SVG로 그립니다. 동행복권 로고·상표는 쓰지 않습니다.
+- 이미지 에셋은 PWA 아이콘(`public/icons/*.png`, 로고 SVG를 렌더링해 만듦)뿐. 공·로고·아이콘은 CSS 그라데이션과 인라인 SVG로 그립니다. 동행복권 로고·상표는 쓰지 않습니다.
 - **이모지를 아이콘으로 쓰지 않습니다.** 새 아이콘은 `currentColor` 인라인 SVG, 장식이면 `aria-hidden`.
 
 ## 5. 스타일 방식

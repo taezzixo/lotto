@@ -20,7 +20,8 @@
 | 9 | 사용자 입력 | 소득·자산 → localStorage | 복권(QR·직접 입력·분석 번호) → localStorage `lotto-lab:tickets:v1`. **QR 원문(일련번호) 미저장**, SHA-256 해시만 |
 | 10 | 계정 | Supabase(선택) | **없음**. JSON 내보내기·가져오기 |
 | 11 | 데이터 크기 | 단일 파일 | `draws.json` 1개(1,250회, gzip 38KB) + 첫 화면 확인용 `latest.json` |
-| 12 | SEO 페이지 | `/n/<id>` | v0.1 없음(회차별 페이지는 v0.2 검토) |
+| 12 | SEO 페이지 | `/n/<id>` | 아직 없음(회차별 페이지 예정) |
+| 14 | 오프라인 | 없음 | **PWA 서비스 워커**(v0.2): 앱 셸·데이터 캐시, 오프라인에서도 통계·기록 열람 |
 | 13 | 관리자 페이지 | `/admin.html` | v0.1 없음. 수집 실패는 GitHub 이슈(`data-pipeline` 라벨)로 알림 |
 
 ## 1. 전체 구성도
@@ -137,7 +138,8 @@ lotto/
 ├─ CLAUDE.md · README.md · wrangler.jsonc · index.html · vite.config.ts
 ├─ .github/workflows/deploy.yml   # check(main 푸시·PR) + collect(토요일 + 수동)
 ├─ public/
-│  ├─ _headers                    # /data 10분, /assets 1년, camera=(self)
+│  ├─ _headers                    # /data 10분, /assets 1년, sw.js no-cache, camera=(self)
+│  ├─ manifest.webmanifest · sw.js · icons/   # PWA (앱 셸 오프라인)
 │  └─ data/draws.json · latest.json
 ├─ scripts/
 │  ├─ update_lotto.py             # 수집 (표준 라이브러리)

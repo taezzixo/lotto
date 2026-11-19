@@ -7,6 +7,7 @@ import { dateKo, won } from '../lib/format.ts';
 import { gradeTickets } from '../lib/report.ts';
 import { Ball, DrawBalls, MatchBalls } from './Ball.tsx';
 import { IconCalendar, IconScan } from './Icons.tsx';
+import { InstallCard } from './InstallCard.tsx';
 
 export function Home({ data, tickets, actions }: { data: AppData; tickets: Ticket[]; actions: Actions }) {
   const { latest, draws } = data;
@@ -125,6 +126,8 @@ export function Home({ data, tickets, actions }: { data: AppData; tickets: Ticke
           </div>
         </section>
       </div>
+
+      <InstallCard ticketCount={tickets.filter((t) => t.source !== 'analysis').length} />
 
       <section className="sheet" aria-labelledby="recent-title">
         <div className="sheet-head">

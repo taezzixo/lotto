@@ -9,14 +9,30 @@ import { STRATEGIES } from '../lib/strategy.ts';
 import { Ball, MatchBalls } from './Ball.tsx';
 import { BarChart, Legend } from './Charts.tsx';
 import { IconDownload, IconScan, IconTrash, IconUpload } from './Icons.tsx';
+import { computeBadges } from '../lib/badges.ts';
+import { BadgeShelf } from './Badges.tsx';
+import { ShareCard } from './ShareCard.tsx';
+
+const BACKUP_KEY = 'lotto-lab:backed-up-at';
+function readBackedUp(): boolean {
+  try {
+    return !!localStorage.getItem(BACKUP_KEY);
+  } catch {
+    return false;
+  }
+}
 
 export function Records({ data, tickets, actions }: { data: AppData; tickets: Ticket[]; actions: Actions }) {
   const [withPicks, setWithPicks] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [backedUp, setBackedUp] = useState(readBackedUp);
   const fileRef = useRef<HTMLInputElement>(null);
   const scope = useMemo(() => tickets.filter((t) => withPicks || t.source !== 'analysis'), [tickets, withPicks]);
   const { graded } = useMemo(() => gradeTickets(scope, data.byNo), [scope, data.byNo]);
   const rep = useMemo(() => hitReport(graded), [graded]);
   const rounds = useMemo(() => [...new Set(tickets.map((t) => t.round))].sort((a, b) => b - a), [tickets]);
+  const allGraded = useMemo(() => gradeTickets(tickets, data.byNo).graded, [tickets, data.byNo]);
+  const badges = useMemo(() => computeBadges(tickets, allGraded, { backedUp }), [tickets, allGraded, backedUp]);
 
   const doExport = () => {
     const blob = new Blob([exportFile(tickets)], { type: 'application/json' });
@@ -25,6 +41,12 @@ export function Records({ data, tickets, actions }: { data: AppData; tickets: Ti
     a.download = `lotto-lab-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    try {
+      localStorage.setItem(BACKUP_KEY, new Date().toISOString());
+    } catch {
+      /* 저장 불가 환경 */
+    }
+    setBackedUp(true);
     actions.toast('기록 파일을 내려받았어요');
   };
   const doImport = async (f: File) => {
@@ -83,6 +105,11 @@ export function Records({ data, tickets, actions }: { data: AppData; tickets: Ti
                   )}
                 </p>
                 {rep.games < 10 && <p className="notice">10게임이 넘으면 비교가 더 정확해져요.</p>}
+                <div>
+                  <button type="button" className="btn ghost" onClick={() => setSharing(true)}>
+                    공유 카드 만들기
+                  </button>
+                </div>
               </section>
 
               <section className="sheet" aria-labelledby="hit-title">
@@ -183,6 +210,8 @@ export function Records({ data, tickets, actions }: { data: AppData; tickets: Ti
             </div>
           )}
 
+          <BadgeShelf badges={badges} />
+
           <section className="sheet" aria-labelledby="list-title">
             <div className="sheet-head">
               <h3 id="list-title">저장한 복권</h3>
@@ -262,6 +291,7 @@ export function Records({ data, tickets, actions }: { data: AppData; tickets: Ti
           />
         </div>
       </section>
+      {sharing && <ShareCard rep={rep} onClose={() => setSharing(false)} onToast={actions.toast} />}
     </div>
   );
 }
