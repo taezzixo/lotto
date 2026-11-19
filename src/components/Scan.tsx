@@ -148,7 +148,7 @@ export function Scan({ data, actions }: { data: AppData; actions: Actions }) {
             <p className="status" aria-live="polite">
               {status}
             </p>
-            <button type="button" className="icon-btn" style={{ position: 'absolute', top: 10, right: 10, color: '#fff' }} onClick={stop} aria-label="카메라 끄기">
+            <button type="button" className="icon-btn close" onClick={stop} aria-label="카메라 끄기">
               <IconClose />
             </button>
           </>

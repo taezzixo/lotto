@@ -62,6 +62,9 @@ export function BarChart({
   const bw = Math.max(1, step - gap);
   const y = (v: number) => PAD.top + ih - (v / max) * ih;
   const ticks = niceTicks(max);
+  // 라벨이 겹치지 않게: 가장 긴 라벨 폭(대략 글자당 6.5px)보다 칸이 좁으면 건너뛰며 표시
+  const longest = Math.max(...data.map((d) => d.label.length)) * 6.5 + 6;
+  const every = Math.max(tickEvery, Math.ceil(longest / step));
 
   const onKey = (e: KeyboardEvent) => {
     if (e.key === 'ArrowRight') setActive((a) => Math.min(data.length - 1, (a ?? -1) + 1));
@@ -145,7 +148,7 @@ export function BarChart({
             </text>
           ))}
         {data.map((d, i) =>
-          i % tickEvery === 0 || i === data.length - 1 ? (
+          i % every === 0 || (i === data.length - 1 && (data.length - 1) % every >= every / 2) ? (
             <text key={`x${d.key}`} className="axis" x={PAD.left + i * step + step / 2} y={height - 8} textAnchor="middle">
               {d.label}
             </text>

@@ -90,7 +90,7 @@ export function Stats({ data }: { data: AppData }) {
             <RankList title="오래 쉰 번호" rows={ranked(gap, 'desc').slice(0, 6)} unit="회째" />
           </div>
           <div style={{ marginTop: 18 }}>
-            <h3 style={{ fontSize: 'var(--step-0)' }}>번호대별 비중</h3>
+            <h3 style={{ fontSize: 'var(--step-0)' }}>번호대별 비중 (5개 단위)</h3>
             <BarChart
               ariaLabel="번호대별 출현 비중과 기대 비중"
               height={170}

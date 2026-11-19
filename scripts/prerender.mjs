@@ -36,24 +36,25 @@ const dateKo = (iso) => {
 const ball = (n, extra = '') => `<span class="ball g${group(n)}${extra}">${n}</span>`;
 
 const CSS = `
-:root{--bg:#eceef5;--surface:#fff;--line:#d9dcea;--ink:#161b3a;--ink-2:#3d4368;--muted:#646a8c;--slip:#cf2f68;--slip-ink:#fff;
---b1:#f5c518;--b1i:#3a2a00;--b2:#2f7de1;--b3:#e5484d;--b4:#868b9e;--b5:#2fa865;color-scheme:light}
-@media (prefers-color-scheme:dark){:root{--bg:#0b0f22;--surface:#141a35;--line:#283058;--ink:#eceefa;--ink-2:#c4c8e2;--muted:#9097bd;--slip:#ff5c93;--slip-ink:#1a0712;--b4:#7b8094;color-scheme:dark}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 'Gothic A1','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;word-break:keep-all}
+:root{--bg:#f3eada;--surface:#f9f3e8;--surface-2:#e9dcc7;--line:#bcab96;--ink:#261a12;--ink-2:#3a2d24;--muted:#62554a;--accent:#2942ab;--accent-ink:#f5eee0;
+--b1:#e8b512;--b1i:#2a1d00;--b2:#2f6fd0;--b3:#d6423f;--b4:#7f8291;--b5:#2c9a5c;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#490c13;--surface:#531a1e;--surface-2:#5d2729;--line:#793f40;--ink:#f2eadd;--ink-2:#dacfbf;--muted:#c3b0a2;--accent:#ebc573;--accent-ink:#490c13;--b4:#8d909e;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 'Hanken Grotesk','Gothic A1','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;word-break:keep-all}
 .wrap{max-width:760px;margin:0 auto;padding:16px max(16px,env(safe-area-inset-right)) 48px max(16px,env(safe-area-inset-left))}
-a{color:var(--slip)}header a{color:var(--ink);font-weight:800;text-decoration:none}
-.sheet{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;margin-top:14px}
-h1{margin:0;font-size:1.8rem;line-height:1.25}h2{margin:0 0 8px;font-size:1.15rem}
+a{color:var(--accent);text-underline-offset:3px}header{padding-bottom:8px;border-bottom:4px double var(--ink)}header a{color:var(--ink);font-family:'Song Myung',Georgia,serif;font-size:1.15rem;text-decoration:none}
+.sheet{background:var(--surface);border:1px solid var(--line);border-top:1px solid var(--ink);border-radius:2px;padding:20px;margin-top:16px}
+.sheet.lead{background:var(--surface-2);border-top:4px double var(--ink)}
+h1{margin:0;font:600 2.3rem/0.95 'Grenze Gotisch','Song Myung',Georgia,serif}h2{margin:0 0 8px;font:400 1.2rem/1.2 'Song Myung',Georgia,serif}
 .muted{color:var(--muted)}.balls{display:flex;flex-wrap:wrap;gap:clamp(4px,1.4vw,8px);align-items:center;margin:16px 0}
-.ball{display:inline-grid;place-items:center;width:clamp(32px,9.4vw,46px);height:clamp(32px,9.4vw,46px);border-radius:50%;font:800 clamp(13px,4vw,19px) 'Archivo','Gothic A1',sans-serif;color:#fff;
-background:radial-gradient(circle at 30% 24%,rgba(255,255,255,.8) 0 9%,rgba(255,255,255,0) 24%),var(--b)}
+.ball{display:inline-grid;place-items:center;width:clamp(32px,9.4vw,46px);height:clamp(32px,9.4vw,46px);border-radius:50%;font:600 clamp(13px,4vw,19px) 'Hanken Grotesk',sans-serif;color:#fff;
+background:var(--b);box-shadow:inset 0 0 0 2px rgba(255,255,255,.28)}
 .g1{--b:var(--b1);color:var(--b1i)}.g2{--b:var(--b2)}.g3{--b:var(--b3)}.g4{--b:var(--b4)}.g5{--b:var(--b5)}
 .sm .ball{width:28px;height:28px;font-size:12px}.sm{margin:0;gap:4px}
-dl{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:0}dt{color:var(--muted)}dd{margin:0;font-weight:700}
-.cta{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;border-radius:10px;background:var(--slip);color:var(--slip-ink);font-weight:800;text-decoration:none;margin-right:8px;margin-top:8px}
+dl{display:grid;grid-template-columns:auto 1fr;gap:0 16px;margin:0}dt,dd{padding:7px 0;border-bottom:1px solid var(--line)}dt{color:var(--muted)}dd{margin:0;font-weight:600}
+.cta{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;border-radius:2px;background:var(--accent);color:var(--accent-ink);font-weight:500;text-decoration:none;margin-right:12px;margin-top:8px}
 .nav{display:flex;justify-content:space-between;gap:12px;margin-top:16px}
-table{width:100%;border-collapse:collapse}td,th{padding:8px 4px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
-.tw{overflow-x:auto}footer{margin-top:28px;font-size:.8rem;color:var(--muted)}`;
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}thead th{border-bottom:4px double var(--ink)}td,th{padding:8px 4px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.tw{overflow-x:auto}footer{margin-top:28px;padding-top:12px;border-top:4px double var(--ink);font-size:.8rem;color:var(--muted)}`;
 
 function page({ title, desc, path, body }) {
   const canonical = SITE_URL ? `<link rel="canonical" href="${SITE_URL}${path}">\n<meta property="og:url" content="${SITE_URL}${path}">` : '';
@@ -70,7 +71,7 @@ function page({ title, desc, path, body }) {
 <meta property="og:site_name" content="${NAME}">
 ${canonical}
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800&family=Gothic+A1:wght@400;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@600&family=Hanken+Grotesk:wght@400;500;600&family=Song+Myung&family=Gothic+A1:wght@400;600&display=swap">
 <style>${CSS}</style>
 </head>
 <body><div class="wrap">
@@ -105,7 +106,7 @@ for (const d of draws) {
   const prev = byNo.get(d.no - 1);
   const next = byNo.get(d.no + 1);
   const body = `
-<section class="sheet">
+<section class="sheet lead">
 <h1>제${d.no}회 당첨번호</h1>
 <p class="muted">${dateKo(d.date)} 추첨</p>
 <div class="balls" aria-label="당첨번호 ${d.nums.join(', ')}, 보너스 ${d.bonus}">${d.nums.map((n) => ball(n)).join('')}<span aria-hidden="true">+</span>${ball(d.bonus)}</div>
@@ -131,7 +132,7 @@ write(
     title: `로또 전체 회차 당첨번호 (제1회~제${latest.no}회) | ${NAME}`,
     desc: `로또 6/45 제1회(2002년)부터 제${latest.no}회까지 모든 당첨번호와 1등 당첨자 수.`,
     path: '/r/',
-    body: `<section class="sheet"><h1>전체 회차 당첨번호</h1><p class="muted">제1회~제${latest.no}회, 최신 회차가 위에 있어요.</p>
+    body: `<section class="sheet lead"><h1>전체 회차 당첨번호</h1><p class="muted">제1회~제${latest.no}회, 최신 회차가 위에 있어요.</p>
 <div class="tw"><table><thead><tr><th>회차</th><th>추첨일</th><th>당첨번호</th><th>1등</th></tr></thead><tbody>
 ${rows}
 </tbody></table></div></section>`,

@@ -41,6 +41,7 @@ export function Slip({ mode, values, selected = [], hits = [], onPick, label, va
           >
             <span>{n}</span>
             <span className="mark" />
+            {mode === 'heat' && <span className="cnt">{v}</span>}
           </button>
         );
       })}

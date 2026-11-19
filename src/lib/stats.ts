@@ -45,17 +45,12 @@ export function ranked(values: readonly number[], order: 'desc' | 'asc'): Ranked
   return rows.sort((a, b) => (order === 'desc' ? b.value - a.value : a.value - b.value) || a.n - b.n);
 }
 
-/** 번호대(1~10, 11~20, 21~30, 31~40, 41~45) 비중 vs 기대 비중 */
-export function bandShare(draws: readonly Draw[], withBonus: boolean) {
+/** 번호대 비중 vs 기대 비중. 기본 5개 단위(1~5, 6~10 … 41~45, 9구간) */
+export function bandShare(draws: readonly Draw[], withBonus: boolean, width = 5) {
   const f = frequency(draws, withBonus);
   const total = f.reduce((a, b) => a + b, 0) || 1;
-  const bands = [
-    [1, 10],
-    [11, 20],
-    [21, 30],
-    [31, 40],
-    [41, 45],
-  ] as const;
+  const bands: [number, number][] = [];
+  for (let lo = 1; lo <= 45; lo += width) bands.push([lo, Math.min(45, lo + width - 1)]);
   return bands.map(([lo, hi]) => {
     let c = 0;
     for (let n = lo; n <= hi; n++) c += f[n];

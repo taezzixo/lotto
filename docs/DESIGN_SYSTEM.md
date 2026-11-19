@@ -1,85 +1,78 @@
 # 로또 데이터 실험실 디자인 시스템 규칙
 
-디자인 방향: **「용지와 공」**. 로또를 사 본 사람이면 누구나 아는 두 물건에서 가져왔습니다.
+디자인 방향: **「인쇄소의 당첨 장부」**. hallmark 스킬의 **Vellum** 테마(옛 인쇄소: 양피지 바탕, 엄버 잉크, 실선과 이중선, 안료 한 가지)를 바탕으로 2026-11-19 사용자 요청("고풍스럽게")에 맞춰 바꿨습니다. 이전 방향 「용지와 공」(분홍 마킹 용지)은 이 문서로 대체되었습니다.
 
-1. **마킹 용지**: 분홍 잉크로 인쇄된 한 줄 7칸 번호 격자, 그리고 컴퓨터용 펜으로 칠한 표시. 통계 히트맵과 번호 직접 입력이 같은 격자를 씁니다. 빈도는 펜 마킹의 진하기로 표현합니다.
-2. **추첨 공**: 방송 추첨기의 광택 있는 공. 공식 공 색(1~10 노랑, 11~20 파랑, 21~30 빨강, 31~40 회색, 41~45 초록)은 **당첨번호와 내 번호를 보여 줄 때만** 씁니다.
+- 장부: 모든 면은 납작하게 인쇄된 종이입니다. 모서리 2px, 그림자 없음, 깊이는 가는 실선(1px)과 이중선(4px double)으로만 표현합니다.
+- 마킹 용지 격자(한 줄 7칸)는 그대로 둡니다. 칸마다 번호, 펜 마킹 진하기(빈도), **출현 횟수 숫자**가 함께 찍힙니다.
+- 공식 공 색(1~10 노랑, 11~20 파랑, 21~30 빨강, 31~40 회색, 41~45 초록)은 번호 표시에만 쓰고, 광택 없이 평판 인쇄처럼 칠합니다.
+- 움직임은 거의 없습니다(Vellum: Still). 누름·호버 반응만 160ms.
 
-대담함은 첫 화면의 큰 공 일곱 개(한 번 떨어지는 등장 움직임)에만 씁니다. 나머지는 조용한 용지 면으로 둡니다. 2026-11-18 작성.
+사용한 Claude 스킬(저장소 `.claude/skills/`, 위스키 도감과 같은 5종): frontend-design, ui-ux-pro-max(디자인 시스템 검색: 버건디·금박 계열 권장), hallmark(Vellum 테마·sloplint), emil-design-eng, web-design-guidelines.
 
-## 1. 토큰 정의
+## 1. 토큰
 
-**위치**: `src/styles.css` 맨 위 `:root` 블록 한 곳. 라이트가 기본이고, 다크는 `@media (prefers-color-scheme: dark) :root:not([data-theme='light'])`와 `:root[data-theme='dark']` 두 곳에 같은 값을 다시 정의합니다. 컴포넌트는 토큰만 참조하고 색 값을 직접 쓰지 않습니다.
+**위치**: `src/styles.css` 맨 위(hallmark 스탬프 주석 다음) `:root`. 라이트가 기본이고, 다크는 `@media (prefers-color-scheme: dark) :root:not([data-theme='light'])`와 `:root[data-theme='dark']` 두 곳에 같은 값을 다시 정의합니다. 컴포넌트는 토큰만 참조합니다(sloplint가 토큰 밖 색 값을 FAIL로 잡음).
 
-| 그룹 | 토큰 | 라이트 | 다크 | 쓰임 | 쓰지 말 곳 |
-| --- | --- | --- | --- | --- | --- |
-| 바탕 | `--bg` `--surface` `--surface-2` | 감열지 회백 `#eceef5` / 용지 `#fff` / `#f5f6fb` | 추첨 스튜디오 밤 `#0b0f22` / `#141a35` / `#1a2142` | 면의 깊이: bg < surface-2 < surface | 글자 |
-| 선 | `--line` `--line-strong` | `#d9dcea` `#b9bed6` | `#283058` `#3a4475` | 테두리, 격자선, 입력칸(3:1) | |
-| 글자 | `--ink` `--ink-2` `--muted` | `#161b3a` 계열 | `#eceefa` 계열 | 본문 / 보조 / 설명 | 큰 면 채우기 |
-| 펜 마킹 | `--mark-rgb` | 잉크와 같은 남색 | 밝은 회백 | 격자 히트맵 진하기 `rgba(var(--mark-rgb), a)` | |
-| 분홍 잉크 | `--slip` `--slip-hi` `--slip-lo` `--slip-ink` `--slip-soft` | `#cf2f68` | `#ff5c93` | 주 버튼, 선택 상태, 용지 격자, 탭 강조, 포커스 링 | 차트 외 장식 그라데이션 |
-| 당첨 | `--win` `--win-soft` | `#1d7f52` | `#5fd39a` | 등수 배지, 축하 문구 — **항상 글자와 함께** | 차트 계열색 |
-| 공 | `--ball-1`~`--ball-5` + `-ink` | 공식 공 색 | 회색만 약간 어둡게 | `Ball` 컴포넌트만 | 버튼·배경·차트 |
-| 차트 | `--series-1` `--series-2` `--series-3` | `#cf2f68` `#2a6fd6` `#c98a00` | `#e8487f` `#4a84e8` `#b57f0c` | 차트 데이터 표시만 | 버튼·글자 |
+| 그룹 | 토큰 | 라이트 (양피지) | 다크 (옥스블러드 반전) | 쓰임 |
+| --- | --- | --- | --- | --- |
+| 바탕 | `--bg` `--surface` `--surface-2` | `#f3eada` / `#f9f3e8` / `#e9dcc7` | `#490c13` / `#531a1e` / `#5d2729` | 양피지 / 장부 낱장 / 띠·우물 |
+| 선 | `--line` `--line-strong` | `#bcab96` / `#3a2d24` | `#793f40` / `#dacfbf` | 실선, 낱장 위 잉크 선, 이중선 |
+| 글자 | `--ink` `--ink-2` `--muted` | 엄버 `#261a12` 계열 | 종이색 `#f2eadd` 계열 | 본문 / 보조 / 설명 |
+| 안료 | `--accent` `--accent-deep` `--accent-soft` `--accent-ink` | 군청 `#2942ab` | 금박 `#ebc573` | 주 버튼, 선택, 포커스, 큰 지표 숫자, 인장(로고·배지). **안료는 하나** |
+| 당첨 | `--win` `--win-soft` | `#2f6b3f` | `#9fd6a6` | 등수 배지·축하 문구(항상 글자와 함께) |
+| 공 | `--ball-1`~`--ball-5` + `-ink` | 공식 공 색 | 회색만 밝게 | `Ball`에만 |
+| 차트 | `--series-1` `--series-2` `--series-3` | `#3552bc` `#be7c1c` `#98397e` | `#b48c2b` `#6280da` `#b25196` | 차트 데이터만 (dataviz 검증 통과, 다크 3번은 대비 2.94라 범례에 값 직접 표기) |
+| 카메라 | `--frame` `--cam-*` | 테마 무관 | 테마 무관 | QR 카메라 화면 |
+| 섬유 결 | `--fibre` | 0.5 | 0.25 | `.fibre` 띠(홈 최신 회차)에만 |
 
-- 차트 3색은 dataviz 검증 스크립트를 통과했습니다(라이트·다크 모두 CVD 구분 ΔE ≥ 9.9). 라이트의 `--series-3`은 배경 대비가 3:1에 조금 못 미치므로 범례에 값을 직접 적습니다.
-- **글꼴**: 한글 `Gothic A1`(본문·제목), 숫자 `Archivo`(공 번호, 카운트다운, 큰 지표 — 폭 75~85%로 좁혀 씀). Google Fonts `<link>`(index.html), 대체 글꼴 스택 필수.
-- **글자 크기**: `--step--1`~`--step-5`(비율 1.25, 기준 15px).
-- **모서리**: 격자 칸 4px, 버튼 10px, 면 18px, 공·탭 스캔 버튼은 원. 같은 모서리를 모든 곳에 쓰지 않습니다(위계 표시).
-- **움직임**: `--dur-press` 140ms(누름), `--dur-ui` 200ms(상태 변화). 자동 움직임은 첫 화면 공 떨어짐 한 번뿐이며 `prefers-reduced-motion`이면 끕니다.
+**글꼴** (Google Fonts, `index.html`)
+
+| 역할 | 토큰 | 글꼴 | 규칙 |
+| --- | --- | --- | --- |
+| 큰 제목 | `--font-display` | Grenze Gotisch 600 + 송명(한글) | 30px 이상에서만(화면 제목, 홈 회차 제목) |
+| 낱장 제목 | `--font-head` | 송명 | h2·h3, 배지 이름 |
+| 큰 숫자 | `--font-figure` | Grenze 400·500 | 당첨금, 카운트다운, 지표, 운 지수 |
+| 본문·라벨·표 숫자 | `--font-body` | Hanken Grotesk + Gothic A1(한글) | 표·공 숫자는 고정폭(tabular) |
 
 ## 2. 컴포넌트
 
-**위치**: `src/components/*.tsx`. 화면 단위 하나에 파일 하나. 계산은 `src/lib/*.ts` 순수 함수(단위 테스트)로 분리하고 컴포넌트는 표시만 합니다.
-
 | 컴포넌트 | 역할 | 주요 클래스 |
 | --- | --- | --- |
-| `Ball.tsx` | 추첨 공, 내 번호 대조 표시(`MatchBalls`: 일치=색, 불일치=흐림, 보너스 일치=분홍 고리), 당첨번호+보너스(`DrawBalls`) | `.ball.g1~g5` `.miss` `.bonus-hit` `.balls` |
-| `Slip.tsx` | 마킹 용지 격자(7칸). `heat` 모드 = 진하기, `pick` 모드 = 번호 고르기(`aria-pressed`) | `.slip` `.cell` `.mark` `.slip-legend` |
-| `Charts.tsx` | SVG 막대 차트(px 단위로 그려 글자 크기 유지), 기준값 표시선(`marker`), 기준선(`refLine`, 범례로 설명), 신뢰구간, 키보드 ←→ 탐색, 툴팁 문장 | `.chart` `.legend` `.tip` |
-| `Home.tsx` | 최신 회차 무대, 카운트다운, 이번 주 내 복권, 최근 회차 | `.stage` `.countdown` `.mini-list` |
-| `Stats.tsx` | 구간·보너스 필터, 격자 히트맵 + 번호 상세, 순위, 번호대, 1등 데이터 | `.filters` `.seg` `.detail` `.rank-cols` `.stats` |
-| `Scan.tsx` | 카메라 QR, 사진·링크·직접 입력 | `.scanner` `.frame` `.alt-actions` |
-| `Analysis.tsx` | 전략 4종 분석 번호, 주간 적중 기록·비교 | `.verdict` `table.data` |
-| `Records.tsx` | 운 지수, 일치 분포, 저장한 복권, 백업 | `.luck` `.round-group` `.ticket` |
-| `ResultSheet.tsx` | 스캔 직후 결과 시트, 추첨 뒤 새 결과 알림 | `.overlay` `.result` `.game-rows` `.celebrate` |
-| `Badges.tsx` | 배지 진열장: 획득 = 분홍 동전 + 체크, 미획득 = 점선 고리에 진행도(conic) | `.badges` `.coin` `.earned` `.locked` |
-| `ShareCard.tsx` | 공유 카드 PNG(캔버스). 테마와 무관하게 용지 색 고정, 번호·일련번호 미포함 | `.share-preview` |
-| `InstallCard.tsx` | 홈 화면 추가 안내(복권 2장 이상, 다시 보지 않기) | `.install` |
-| `Icons.tsx` | 인라인 SVG 아이콘(`currentColor`), 로고 | — |
+| `Ball.tsx` | 평판 인쇄 공(광택 없음), 내 번호 대조(일치=색, 불일치=빈 원, 보너스 일치=안료 고리) | `.ball.g1~g5` `.miss` `.bonus-hit` |
+| `Slip.tsx` | 마킹 용지 격자 7칸. `heat` 모드는 마킹 진하기 + **칸 아래 출현 횟수**(`.cnt`), `pick` 모드는 번호 고르기 | `.slip` `.cell` `.mark` `.cnt` |
+| `Charts.tsx` | SVG 막대 차트. 칸이 좁으면 x축 라벨을 자동으로 건너뜀(9구간 번호대 차트 대응) | `.chart` `.legend` `.tip` |
+| `Stats.tsx` | 번호대 비중은 **5개 단위 9구간**(1~5 … 41~45) | `.filters` `.seg` `.detail` |
+| `Home.tsx` | 최신 회차 띠(섬유 결 + 위 이중선) | `.stage.fibre` `.countdown` |
+| `Badges.tsx` | 배지: 획득 = 안료 인장, 미획득 = 점선 고리 진행도 | `.badges` `.coin` |
+| `ShareCard.tsx` | 공유 카드 PNG: 양피지 낱장 + 위 이중선 + 군청 인장, 테마 무관 | `.share-preview` |
+| `Icons.tsx` | 인라인 SVG(`currentColor`, 장식은 `aria-hidden`), 로고 = 안료 인장(테마 색을 따름) | — |
 
 공통 패턴
-- **면**: `.sheet`(용지 흰 면 + 얇은 선 + 아래 그림자). 한 덩어리 내용에만 씁니다.
-- **버튼**: `.btn`(분홍) / `.btn.ghost`(선) / `.btn.big`(엄지 영역 큰 동작). 선택 상태는 `aria-pressed`, 현재 탭은 `aria-current="page"`.
-- **배지**: `.badge`(기본) / `.badge.win`(당첨) / `.badge.pending`(대기·잠정). ⚠️ `.slip`은 격자 전용 클래스이므로 수식어로 쓰지 않습니다(이름 충돌 사례 있음).
+- **낱장** `.sheet`: 1px 실선 둘레 + 위쪽 1px 잉크 선, 머리 아래 실선. 그림자 없음.
+- **이중선**: 상단 머리글 아래, 하단 탭 바 위, 표 머리 아래, 홈 띠 위, 결과 시트 위, 푸터 위.
+- **버튼**: `.btn`(안료) / `.btn.ghost`(1px 잉크 테두리). 고르기 `.seg`는 네모 칸을 이어 붙이고 선택 칸만 안료.
+- **하단 탭 바**: 화면 폭 전체의 인쇄 띠(넓은 화면은 가운데 560px). 가운데 QR 채점은 네모난 안료 도장.
 
 ## 3. 프레임워크·도구
 
-- React 18 + TypeScript(strict) + Vite 5. 런타임 의존성은 `react`, `react-dom`, `jsqr`(iOS 사파리용 QR 판독, 스캔 시 지연 로드)뿐입니다.
-- 스타일: 전역 CSS 한 파일(`src/styles.css`) + CSS 사용자 정의 속성. CSS-in-JS·Tailwind 없음.
-- 차트: SVG 직접 구현. 새 의존성은 사용자 확인 후 추가합니다.
-- 테스트: `node --test`(TS 그대로 실행) + Python `unittest`. 화면은 Playwright 스크린샷(라이트·다크·390px·1280px)으로 확인합니다.
+- React 18 + TypeScript + Vite 5, 런타임 의존성 `react` `react-dom` `jsqr`. 스타일은 `src/styles.css` 한 파일.
+- 화면 확인: Playwright 스크린샷(390px 라이트·다크, 1280·1480px).
+- **디자인 검사**: `node .claude/skills/hallmark/scripts/sloplint.mjs src --genre editorial --scope app` → **FAIL 0** 유지. 면제는 `styles.css` 맨 위 스탬프 아래에 사유와 함께(글꼴 4종: 한글 때문에 송명 필요 — 승인됨).
+- 차트 색 바꿀 때: dataviz 검증 스크립트로 라이트(`#f9f3e8`)·다크(`#531a1e`) 표면 기준 통과 확인.
 
-## 4. 에셋·아이콘
+## 4. 에셋
 
-- 이미지 에셋은 PWA 아이콘(`public/icons/*.png`, 로고 SVG를 렌더링해 만듦)뿐. 공·로고·아이콘은 CSS 그라데이션과 인라인 SVG로 그립니다. 동행복권 로고·상표는 쓰지 않습니다.
-- **이모지를 아이콘으로 쓰지 않습니다.** 새 아이콘은 `currentColor` 인라인 SVG, 장식이면 `aria-hidden`.
+- 이미지는 PWA 아이콘(`public/icons/*.png`, 군청 인장)과 `favicon.svg`뿐. 회차 페이지(`scripts/prerender.mjs`)도 같은 색·글꼴.
+- 이모지를 아이콘으로 쓰지 않습니다. 동행복권 로고·상표는 쓰지 않습니다.
 
-## 5. 스타일 방식
+## 5. 쓰지 않는 것
 
-- 짧은 의미 클래스 + 상태 클래스(`.miss`, `.hit`) + ARIA 상태(`[aria-pressed]`, `[aria-current]`). 선택자 깊이 2단계 이내.
-- 전역: `word-break: keep-all`, `accent-color: var(--slip)`, `:focus-visible` 분홍 링.
-- 반응형: 모바일 기준 + `@media (min-width: 900px)`에서 2열(`.grid-2`). 좌우 여백 `max(16px, env(safe-area-inset-*))`, 가로 스크롤 금지(표는 `.table-wrap` 안에서만).
-- 하단 탭 바: 5칸, 가운데 QR 채점 버튼이 가장 큼(엄지 영역). 결과 시트가 열리면 토스트는 위로 올라갑니다.
-- 접근성: 터치 대상 44px, 대비 4.5:1, 차트는 표 보기·툴팁 문장 제공, 색만으로 정보 전달 금지(공에는 숫자, 당첨에는 글자).
-- **쓰지 않는 것**: 대문자 라벨, "A · B · C" 메타 문자열, 모든 블록을 같은 카드로 감싸기, 이모지 아이콘, 차트에 버튼 강조색, 공 색을 장식에 쓰기.
+광택·그라데이션 공, 둥근 알약 버튼, 카드 그림자, 두 번째 안료, 양피지 위 옥스블러드 안료(옥스블러드는 다크 바탕만), 찢긴 종이·얼룩·불탄 자국 같은 장식, 대문자 라벨, "A · B" 메타 문자열, 공 색을 장식에 쓰기, Grenze Gotisch를 30px 미만이나 문단에 쓰기.
 
 ## 6. 출시 전 점검표
 
-- [x] 이모지 아이콘 없음, 클릭 요소 `cursor: pointer`
-- [x] 누름 반응 140~200ms, 자동 움직임은 공 떨어짐 한 번
-- [x] 라이트·다크 대비, 키보드 포커스 보임
-- [x] `prefers-reduced-motion`이면 움직임 끔
-- [x] 390 / 1280px 가로 스크롤 없음(Playwright 검사)
-- [x] 차트 색은 `--series-*`만, 검증 스크립트 통과
-- [ ] 실기기(아이폰 사파리·안드로이드 크롬) 카메라 QR 인식 확인
+- [x] sloplint FAIL 0
+- [x] 390 / 1280 / 1480px 가로 스크롤 없음, 라이트·다크 확인
+- [x] 터치 대상 44px, 키보드 포커스(안료 링), `prefers-reduced-motion`
+- [x] 차트 색 검증 통과
+- [ ] 실기기(아이폰·안드로이드)에서 글꼴 로딩·카메라 확인

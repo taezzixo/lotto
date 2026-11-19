@@ -16,43 +16,45 @@ async function drawCard(rep: HitReport): Promise<Blob> {
   c.width = W;
   c.height = H;
   const g = c.getContext('2d')!;
-  const ink = '#161b3a';
-  const muted = '#646a8c';
-  const slip = '#cf2f68';
-  const theory = '#2a6fd6';
-  const ko = "'Gothic A1', 'Apple SD Gothic Neo', sans-serif";
-  const num = "'Archivo', 'Gothic A1', sans-serif";
+  const ink = '#261a12';
+  const muted = '#62554a';
+  const slip = '#2942ab'; // 군청 안료
+  const theory = '#be7c1c';
+  const ko = "'Hanken Grotesk', 'Gothic A1', 'Apple SD Gothic Neo', sans-serif";
+  const head = "'Song Myung', 'Grenze', Georgia, serif";
+  const num = "'Grenze', Georgia, serif";
 
-  g.fillStyle = '#eceef5';
+  g.fillStyle = '#e9dcc7';
   g.fillRect(0, 0, W, H);
-  g.fillStyle = '#ffffff';
-  roundRect(g, 60, 60, W - 120, H - 120, 36);
-  g.fill();
-  g.strokeStyle = slip;
-  g.lineWidth = 4;
-  g.stroke();
+  g.fillStyle = '#f9f3e8';
+  g.fillRect(60, 60, W - 120, H - 120);
+  // 인쇄소 장부처럼 위쪽 이중선, 둘레 가는 선
+  g.strokeStyle = ink;
+  g.lineWidth = 2;
+  g.strokeRect(60, 60, W - 120, H - 120);
+  g.fillStyle = ink;
+  g.fillRect(60, 60, W - 120, 5);
+  g.fillRect(60, 72, W - 120, 2);
 
-  // 머리: 로고 공 + 이름
-  const lg = g.createRadialGradient(150, 150, 6, 160, 160, 52);
-  lg.addColorStop(0, '#ff8fb2');
-  lg.addColorStop(0.55, slip);
-  lg.addColorStop(1, '#8e1440');
-  g.fillStyle = lg;
+  // 머리: 안료 인장 + 이름
+  g.fillStyle = slip;
   g.beginPath();
   g.arc(160, 160, 46, 0, Math.PI * 2);
   g.fill();
-  g.fillStyle = '#fff';
+  g.strokeStyle = '#f5eee0';
+  g.lineWidth = 2.5;
   g.beginPath();
-  g.arc(160, 160, 24, 0, Math.PI * 2);
-  g.fill();
-  g.fillStyle = ink;
-  g.font = `800 26px ${num}`;
+  g.arc(160, 160, 38, 0, Math.PI * 2);
+  g.stroke();
+  g.fillStyle = '#f5eee0';
+  g.font = `500 40px ${num}`;
   g.textAlign = 'center';
   g.textBaseline = 'middle';
-  g.fillText('45', 160, 162);
+  g.fillText('45', 160, 163);
   g.textAlign = 'left';
   g.textBaseline = 'alphabetic';
-  g.font = `800 44px ${ko}`;
+  g.fillStyle = ink;
+  g.font = `400 46px ${head}`;
   g.fillText('로또 데이터 실험실 나의 적중률', 230, 176);
 
   // 운 지수
@@ -60,10 +62,10 @@ async function drawCard(rep: HitReport): Promise<Blob> {
   g.font = `700 36px ${ko}`;
   g.fillText('운 지수', 120, 320);
   g.fillStyle = slip;
-  g.font = `900 260px ${num}`;
+  g.font = `500 270px ${num}`;
   g.fillText(String(rep.luckIndex), 108, 560);
   g.fillStyle = ink;
-  g.font = `700 40px ${ko}`;
+  g.font = `400 42px ${head}`;
   const top = rep.luckTop <= 0.5 ? `무작위로 산 사람 중 상위 ${Math.max(1, Math.round(rep.luckTop * 100))}%` : '평균보다 조금 덜 맞았어요';
   g.fillText(top, 120, 640);
   g.fillStyle = muted;
@@ -82,7 +84,7 @@ async function drawCard(rep: HitReport): Promise<Blob> {
     const x = 120 + i * (bw + gap);
     const h = (mine[i] / maxV) * maxH;
     g.fillStyle = slip;
-    roundRect(g, x, base - h, bw, h, Math.min(8, h / 2));
+    roundRect(g, x, base - h, bw, h, Math.min(2, h / 2));
     g.fill();
     const ty = base - (MATCH_PROB[k] / maxV) * maxH;
     g.strokeStyle = theory;

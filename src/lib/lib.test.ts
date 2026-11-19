@@ -100,10 +100,13 @@ test('미출현: 최신 회차 번호는 0', () => {
   assert.ok(g.slice(1).every((x) => x >= 0));
 });
 
-test('번호대 비중 합 = 1', () => {
+test('번호대 비중: 5개 단위 9구간, 합 = 1', () => {
   const s = bandShare(draws, false);
+  assert.equal(s.length, 9);
+  assert.deepEqual([s[0].label, s[8].label], ['1~5', '41~45']);
   assert.ok(Math.abs(s.reduce((a, b) => a + b.share, 0) - 1) < 1e-9);
-  assert.equal(s[4].expected, 5 / 45);
+  assert.ok(s.every((b) => Math.abs(b.expected - 5 / 45) < 1e-12));
+  assert.equal(bandShare(draws, false, 10).length, 5);
 });
 
 test('1등 요약: 최다 1128회 63명, 이월 14회', () => {

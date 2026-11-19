@@ -14,7 +14,8 @@
 ## 규칙
 - 계산은 `src/lib/*.ts` 순수 함수 + 테스트, 화면은 `src/components/`. TS 파일 import는 `.ts`/`.tsx` 확장자를 붙임(node --test가 그대로 실행).
 - 색·글꼴·간격은 `src/styles.css` `:root` 토큰만. 다크는 두 블록(미디어 쿼리·`data-theme`)에 같이 추가. 규칙은 `docs/DESIGN_SYSTEM.md`.
-- 공 색은 번호 표시에만, 분홍은 주 동작·선택에만, 차트는 `--series-*`만. 이모지 아이콘·"A · B" 메타 문자열·대문자 라벨 금지.
+- 디자인은 「인쇄소의 당첨 장부」(hallmark Vellum): 공 색은 번호 표시에만, 안료(라이트 군청·다크 금박)는 주 동작·선택에만, 차트는 `--series-*`만. 모서리 2px·그림자 없음·실선과 이중선. 이모지 아이콘·"A · B" 메타 문자열·대문자 라벨 금지.
+- 디자인 스킬은 `.claude/skills/`(frontend-design, ui-ux-pro-max, hallmark, emil-design-eng, web-design-guidelines). 화면을 바꾸면 `node .claude/skills/hallmark/scripts/sloplint.mjs src --genre editorial --scope app`으로 FAIL 0 유지.
 - QR 원문(일련번호 포함)은 저장하지 않음 — `ticketKey()` 해시만.
 - 확률 고지(푸터)와 "당첨은 동행복권에서 확인" 안내를 지우지 않음. "확률을 높인다"는 표현 금지.
 - 데이터 파일(`public/data`)은 봇이 커밋함. 손으로 고치면 `StoredDataTests`가 깨질 수 있음.
