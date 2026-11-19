@@ -58,7 +58,7 @@
 - [x] `main` 브랜치 만들기 + GitHub 기본 브랜치를 `main`으로 변경 (2026-11-19)
 - [x] Cloudflare → Workers 및 Pages → `taezzixo/lotto` 연결 (2026-11-19)
 - [x] Cloudflare 빌드 변수 `SITE_URL` 등록 (2026-11-19) → 다음 빌드부터 sitemap·canonical 생성
-- [ ] 운영 주소 알려 주기(이 작업 환경에서는 접속 확인 불가, 문서 기록용)
+- [ ] 운영 주소 확인: Cloudflare Worker 이름이 `lotto`(빌드 기록 기준)라서 주소는 `https://lotto.kth95280.workers.dev`로 추정. `wrangler.jsonc` 이름도 `lotto`로 맞춤(2026-11-19). `SITE_URL`도 이 주소여야 함
 - [x] v0.2를 `main`에 반영 허락 (2026-11-19)
 - [ ] 실물 복권 QR로 휴대폰에서 스캔해 보기(아이폰·안드로이드 각각), 이상하면 알려 주기
 - [ ] (선택) 토요일 첫 예약 실행 뒤 Actions 로그 확인 — 공식 엔드포인트 응답 여부
