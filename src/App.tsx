@@ -8,6 +8,7 @@ import { Scan } from './components/Scan.tsx';
 import { Analysis } from './components/Analysis.tsx';
 import { Records } from './components/Records.tsx';
 import { ResultSheet, RoundResults } from './components/ResultSheet.tsx';
+import { fetchFallback, missingRound } from './lib/fallback.ts';
 
 export type Tab = 'home' | 'stats' | 'scan' | 'analysis' | 'records';
 const TABS: Tab[] = ['home', 'stats', 'scan', 'analysis', 'records'];
@@ -52,8 +53,16 @@ async function fetchData(): Promise<AppData> {
   const res = await fetch('./data/draws.json', { cache: 'no-cache' });
   if (!res.ok) throw new Error(`당첨번호 데이터를 불러오지 못했어요 (HTTP ${res.status}).`);
   const draws: Draw[] = await res.json();
+  // 추첨 후 1시간이 지나도 사이트 데이터에 새 회차가 없으면 공개 미러에서 직접 가져와 '잠정'으로 붙인다(PRD §9.8)
+  const missing = missingRound(draws[draws.length - 1].no);
+  if (missing && Date.now() - lastFallbackTry > 5 * 60 * 1000) {
+    lastFallbackTry = Date.now();
+    const extra = await fetchFallback(missing);
+    if (extra) draws.push(extra);
+  }
   return { draws, byNo: new Map(draws.map((d) => [d.no, d])), latest: draws[draws.length - 1] };
 }
+let lastFallbackTry = 0;
 
 async function fetchLatestNo(): Promise<number | null> {
   try {
@@ -88,7 +97,7 @@ export function App() {
     const onVisible = async () => {
       if (document.visibilityState !== 'visible' || !data) return;
       const no = await fetchLatestNo();
-      if (no && no > data.latest.no) load();
+      if ((no && no > data.latest.no) || (data.latest.status === 'PROVISIONAL' && no === data.latest.no) || missingRound(data.latest.no)) load();
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);
@@ -216,7 +225,7 @@ export function App() {
         </p>
         {data && (
           <p>
-            데이터: 제1회~제{data.latest.no}회, 매주 토요일 밤 자동 갱신
+            데이터: 제1회~제{data.latest.no}회, 매주 토요일 밤 자동 갱신. <a href="./r/">전체 회차 당첨번호</a>
           </p>
         )}
       </footer>

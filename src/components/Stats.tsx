@@ -208,6 +208,9 @@ export function Stats({ data }: { data: AppData }) {
       <section className="sheet">
         <details className="table-toggle">
           <summary>회차별 1등 기록 표로 보기 (최근 30회)</summary>
+          <p className="notice">
+            회차 번호를 누르면 그 회차 페이지로 가요. <a href="./r/">전체 회차 목록</a>
+          </p>
           <div className="table-wrap">
             <table className="data">
               <thead>
@@ -225,7 +228,9 @@ export function Stats({ data }: { data: AppData }) {
                   .reverse()
                   .map((d) => (
                     <tr key={d.no}>
-                      <td className="num">{d.no}</td>
+                      <td className="num">
+                        <a href={`./r/${d.no}/`}>{d.no}</a>
+                      </td>
                       <td>{d.date}</td>
                       <td>{d.nums.join(', ')} + {d.bonus}</td>
                       <td className="r num">{d.first.winners}명</td>

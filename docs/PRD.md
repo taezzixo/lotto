@@ -433,7 +433,7 @@ stateDiagram-v2
 
 1. 앱 셸과 `draws.json`은 Service Worker로 캐시한다(파일명 해시 또는 ETag로 갱신).
 2. `latest.json`은 **네트워크 우선**(`no-cache`)으로 받는다. 토요일 20:35 이후 `nextRound`가 아직 반영되지 않았으면 5분 간격으로 재확인한다(앱이 화면에 있을 때만).
-3. **클라이언트 폴백**: 추첨 후 60분이 지나도 반영되지 않았으면 smok95 `latest.json`을 직접 조회한다(GitHub Pages CORS 허용 여부는 PoC에서 확인). 조회 결과는 `PROVISIONAL`로 채점하고 “잠정” 배지를 붙인다.
+3. **클라이언트 폴백**(v0.3 구현, `src/lib/fallback.ts`): 추첨 후 60분이 지나도 반영되지 않았으면 smok95 `latest.json`을 직접 조회한다(GitHub Pages CORS 허용 여부는 PoC에서 확인). 조회 결과는 `PROVISIONAL`로 채점하고 “잠정” 배지를 붙인다.
 4. 통계(빈도, 미출현, 동반출현, 1등 지표)는 Web Worker에서 계산해 메모이즈한다. 1,250회 기준 10ms 미만이 목표다.
 
 ---

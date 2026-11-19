@@ -45,6 +45,8 @@ export function Home({ data, tickets, actions }: { data: AppData; tickets: Ticke
           <p className="prize-line">
             1등 {winners}명이 <strong>{won(latest.first.prize)}</strong>씩 받았어요
           </p>
+        ) : latest.status !== 'COMPLETE' ? (
+          <p className="prize-line">1등 당첨자와 당첨금은 집계 중이에요</p>
         ) : (
           <p className="prize-line">1등이 나오지 않아 당첨금이 다음 회차로 넘어갔어요</p>
         )}
@@ -64,9 +66,11 @@ export function Home({ data, tickets, actions }: { data: AppData; tickets: Ticke
               ) : null}
             </span>
           )}
-          <span>
-            판매액 <b>{won(latest.sales)}</b>
-          </span>
+          {latest.sales > 0 && (
+            <span>
+              판매액 <b>{won(latest.sales)}</b>
+            </span>
+          )}
         </div>
       </section>
 

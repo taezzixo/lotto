@@ -213,3 +213,25 @@ test('배지: 조건별 획득', async () => {
   assert.equal(b['backup'].earned, false);
   assert.ok(d.bonus === 8);
 });
+
+test('추첨 직후 대체 조회: 필요한 회차 판단과 미러 응답 검증', async () => {
+  const { missingRound, fromMirror, fetchFallback } = await import('./fallback.ts');
+  // 1251회 추첨 2026-11-21 20:35 KST = 11:35Z
+  assert.equal(missingRound(1250, new Date('2026-11-21T11:00:00Z')), null); // 추첨 전
+  assert.equal(missingRound(1250, new Date('2026-11-21T12:00:00Z')), null); // 추첨 25분 뒤(대기)
+  assert.equal(missingRound(1250, new Date('2026-11-21T12:40:00Z')), 1251); // 65분 뒤
+  assert.equal(missingRound(1251, new Date('2026-11-21T12:40:00Z')), null); // 이미 반영
+  const ok = { draw_no: 1251, numbers: [44, 3, 9, 17, 22, 38], bonus_no: 12, date: '2026-11-21T00:00:00Z', divisions: [{ prize: 2e9, winners: 10 }], total_sales_amount: 1e11, winners_combination: { auto: 7 } };
+  const d = fromMirror(ok, 1251)!;
+  assert.deepEqual(d.nums, [3, 9, 17, 22, 38, 44]);
+  assert.equal(d.status, 'PROVISIONAL');
+  assert.deepEqual(d.firstType, { auto: 7, semi: 0, manual: 0 });
+  assert.equal(fromMirror({ ...ok, draw_no: 1250 }, 1251), null); // 회차 불일치(미러도 아직 갱신 전)
+  assert.equal(fromMirror({ ...ok, date: '2026-11-14' }, 1251), null); // 날짜 불일치
+  assert.equal(fromMirror({ ...ok, bonus_no: 3 }, 1251), null); // 보너스 중복
+  assert.equal(fromMirror({ ...ok, numbers: [1, 1, 2, 3, 4, 5] }, 1251), null);
+  const fake = (async () => ({ ok: true, json: async () => ok })) as unknown as typeof fetch;
+  assert.equal((await fetchFallback(1251, fake))?.no, 1251);
+  const broken = (async () => { throw new TypeError('CORS'); }) as unknown as typeof fetch;
+  assert.equal(await fetchFallback(1251, broken), null);
+});
