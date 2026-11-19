@@ -114,7 +114,6 @@ export function Analysis({ data, actions }: { data: AppData; actions: Actions })
         <section className="sheet span-2" aria-labelledby="weekly-title">
           <div className="sheet-head">
             <h3 id="weekly-title">최근 52주 주간 적중</h3>
-            <p>막대 = 그 주에 맞힌 개수</p>
           </div>
           <BarChart
             ariaLabel={`${cur.name} 최근 52주 주간 일치 개수`}

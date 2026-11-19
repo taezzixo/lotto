@@ -1,14 +1,12 @@
 /* Hallmark · shape: Workbench · genre: editorial · theme: Vellum (by request) · job: try · draw: manual
  * hero: band · nav: bottom tab bar · footer: ruled colophon · imagery: none · signature: the marking-slip ledger, every number's count printed in its own cell · vellum: parchment / oxblood reversed
- * axes: light/blackletter/cool · posture: committed · contrast: pass · fold: pass · v2.0.0 */
+ * axes: light/grotesque/cool · posture: committed · contrast: pass · fold: pass · v2.0.0 */
 /* Hallmark · pre-emit critique: P4 H4 E4 S4 R4 V4 · weakest: H, the hero is a data band not a photograph; kept because the latest draw's balls are the product's strongest real thing */
-/* Hallmark · waive 37 · Grenze Gotisch, Grenze and Hanken Grotesk have no Hangul · Song Myung carries Korean heads and Gothic A1 is only the Hangul fallback of the body face */
-/* Hallmark · waive 24b · in the Vellum theme the ball, slip cell and tabbar spacing is hand-tuned so seven balls and seven slip cells fit one phone row · moves to the 4px scale when the screens are rebuilt on tokens.css */
 /* Hallmark · waive 28b · the scanner video is the live QR camera preview in this theme and nothing exists to show before the camera starts · the camera button fills the scanner until then */
 /*
  * 로또 데이터 실험실 디자인 토큰 — 「인쇄소의 당첨 장부」 (hallmark Vellum 테마 기반)
- * 양피지 바탕, 엄버 잉크, 실선·이중선, 군청 안료 하나. 어두운 화면은 옥스블러드 바탕 + 금박 안료.
- * 큰 제목은 Grenze Gotisch(라틴·숫자) + 송명(한글), 큰 숫자는 Grenze, 본문은 Hanken Grotesk + Gothic A1.
+ * 양피지 바탕, 엄버 잉크, 가는 실선, 군청 안료 하나. 어두운 화면은 옥스블러드 바탕 + 금박 안료.
+ * 글꼴은 Pretendard 한 가족(2026-11-19 사용자 결정 A안: 한글·영문·숫자 같은 설계, 위계는 굵기와 크기로).
  * 공 색(공식 5색)은 번호 표시에만 쓴다. 규칙: docs/DESIGN_SYSTEM.md
  */
 :root {
@@ -46,16 +44,12 @@
   --rank-top: #c0392b;    /* 출현 1~6위 붉은 테두리 */
   --rank-next: #d9a514;   /* 출현 7~10위 노란 테두리 */
   --rank-next-ink: #8a6400;
-  --fibre: 0.5;
   --ball-1: #e8b512; --ball-1-ink: #2a1d00;  /* 1~10 */
   --ball-2: #2f6fd0; --ball-2-ink: #ffffff;  /* 11~20 */
   --ball-3: #d6423f; --ball-3-ink: #ffffff;  /* 21~30 */
   --ball-4: #7f8291; --ball-4-ink: #ffffff;  /* 31~40 */
   --ball-5: #2c9a5c; --ball-5-ink: #ffffff;  /* 41~45 */
-  --font-display: 'Grenze Gotisch', 'Song Myung', ui-serif, Georgia, serif;
-  --font-head: 'Song Myung', 'Grenze', ui-serif, Georgia, serif;
-  --font-figure: 'Grenze', 'Song Myung', ui-serif, Georgia, serif;
-  --font-body: 'Hanken Grotesk', 'Gothic A1', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+  --font-body: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   --step--1: 0.8rem;
   --step-0: 0.9375rem;
   --step-1: 1.172rem;
@@ -66,7 +60,6 @@
   --radius: 2px;
   --tap: 44px;
   --rule-hair: 1px;
-  --rule-double: 4px;
   --dur-micro: 160ms;
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
@@ -93,7 +86,6 @@
     --series-1: #b48c2b;
     --series-2: #6280da;
     --series-3: #b25196;
-    --fibre: 0.25;
     --ball-4: #8d909e;
     --rank-top: #ff6f61;
     --rank-next: #f2c94c;
@@ -121,7 +113,6 @@
   --series-1: #b48c2b;
   --series-2: #6280da;
   --series-3: #b25196;
-  --fibre: 0.25;
   --ball-4: #8d909e;
   --rank-top: #ff6f61;
   --rank-next: #f2c94c;
@@ -152,13 +143,13 @@ h1,
 h2,
 h3 {
   margin: 0;
-  line-height: 1.2;
-  font-weight: 400;
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   text-wrap: balance;
 }
 h2,
 h3 {
-  font-family: var(--font-head);
 }
 h2 {
   font-size: var(--step-2);
@@ -201,22 +192,6 @@ button {
   white-space: nowrap;
 }
 
-/* 섬유 결 — 띠(band)에만 */
-.fibre {
-  position: relative;
-  isolation: isolate;
-}
-.fibre::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  opacity: var(--fibre);
-  mix-blend-mode: multiply;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='p' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.004 0.02' numOctaves='4' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.62 0 0 0 0 0.52 0 0 0 0 0.36 0 0 0 0.3 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
-}
-
 /* ---------------------------------------------------------------- 셸 */
 .app {
   min-height: 100dvh;
@@ -229,13 +204,12 @@ button {
   align-items: center;
   justify-content: space-between;
   padding: 12px 0 8px;
-  border-bottom: var(--rule-double) double var(--ink);
+  border-bottom: var(--rule-hair) solid var(--line-strong);
 }
 .wordmark {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-family: var(--font-head);
+  gap: 12px;
   font-size: var(--step-1);
   color: var(--ink);
   text-decoration: none;
@@ -268,20 +242,19 @@ main {
 }
 .view {
   display: grid;
-  gap: 18px;
+  gap: 20px;
   padding-top: 16px;
 }
 .view-head {
   display: grid;
-  gap: 6px;
-  padding: 6px 2px 2px;
+  gap: 8px;
+  padding: 8px 2px 2px;
 }
 .view-head h2 {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: var(--step-4);
-  line-height: 0.95;
-  letter-spacing: -0.01em;
+  font-weight: 800;
+  font-size: var(--step-3);
+  line-height: 1.2;
+  letter-spacing: -0.03em;
 }
 .view-head p {
   color: var(--muted);
@@ -298,9 +271,9 @@ main {
   grid-template-columns: repeat(5, 1fr);
   align-items: end;
   max-width: 100%;
-  padding: 6px max(8px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  padding: 8px max(8px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
   background: var(--bg);
-  border-top: var(--rule-double) double var(--ink);
+  border-top: var(--rule-hair) solid var(--line-strong);
   z-index: 20;
 }
 @media (min-width: 720px) {
@@ -311,9 +284,9 @@ main {
     width: 560px;
     bottom: max(12px, env(safe-area-inset-bottom));
     border: 1px solid var(--ink);
-    border-top: var(--rule-double) double var(--ink);
+    border-top: var(--rule-hair) solid var(--line-strong);
     border-radius: var(--radius);
-    padding-bottom: 6px;
+    padding-bottom: 8px;
   }
 }
 .tab {
@@ -321,7 +294,7 @@ main {
   justify-items: center;
   gap: 2px;
   min-height: var(--tap);
-  padding: 6px 0 2px;
+  padding: 8px 0 2px;
   border: 0;
   background: none;
   color: var(--muted);
@@ -344,7 +317,7 @@ main {
   color: var(--accent);
 }
 .tab-scan {
-  margin-top: -22px;
+  margin-top: -24px;
   text-decoration: none !important;
 }
 .tab-scan .lens {
@@ -375,15 +348,15 @@ main {
   border: var(--rule-hair) solid var(--line);
   border-top: var(--rule-hair) solid var(--ink);
   border-radius: var(--radius);
-  padding: 18px;
+  padding: 20px;
 }
 .sheet-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 14px;
-  padding-bottom: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
   border-bottom: var(--rule-hair) solid var(--line);
 }
 .sheet-head p {
@@ -392,7 +365,7 @@ main {
 }
 .grid-2 {
   display: grid;
-  gap: 18px;
+  gap: 20px;
 }
 @media (min-width: 900px) {
   .grid-2 {
@@ -411,7 +384,7 @@ main {
   justify-content: center;
   gap: 8px;
   min-height: var(--tap);
-  padding: 0 18px;
+  padding: 0 20px;
   border: var(--rule-hair) solid var(--accent);
   border-radius: var(--radius);
   background: var(--accent);
@@ -451,7 +424,7 @@ main {
 .link-btn {
   border: 0;
   background: none;
-  padding: 6px 2px;
+  padding: 8px 2px;
   color: var(--accent);
   font-weight: 500;
   min-height: var(--tap);
@@ -466,7 +439,7 @@ main {
 }
 .seg button {
   min-height: 40px;
-  padding: 0 14px;
+  padding: 0 16px;
   margin: 0 -1px -1px 0;
   border: var(--rule-hair) solid var(--ink);
   border-radius: 0;
@@ -511,7 +484,6 @@ main {
   width: var(--size);
   height: var(--size);
   border-radius: 50%;
-  font-family: 'Hanken Grotesk', var(--font-body);
   font-weight: 600;
   font-size: calc(var(--size) * 0.42);
   font-variant-numeric: tabular-nums lining-nums;
@@ -536,7 +508,7 @@ main {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 .plus {
   color: var(--muted);
@@ -546,10 +518,10 @@ main {
 
 /* ---------------------------------------------------------------- 홈: 최신 회차 띠 */
 .stage {
-  padding: 22px 18px 20px;
+  padding: 24px 20px 20px;
   border-radius: var(--radius);
   background: var(--surface-2);
-  border-top: var(--rule-double) double var(--ink);
+  border-top: var(--rule-hair) solid var(--line-strong);
   border-bottom: var(--rule-hair) solid var(--ink);
 }
 .stage-title {
@@ -559,15 +531,15 @@ main {
   gap: 4px 12px;
 }
 .stage-title h1 {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: var(--step-4);
-  line-height: 0.95;
+  font-weight: 800;
+  font-size: var(--step-3);
+  line-height: 1.2;
+  letter-spacing: -0.03em;
 }
 .stage .balls {
   flex-wrap: nowrap;
   gap: clamp(4px, 1.4vw, 12px);
-  margin: 18px 0 16px;
+  margin: 20px 0 16px;
 }
 .stage .ball {
   --size: clamp(32px, 9.4vw, 72px);
@@ -576,8 +548,8 @@ main {
   font-size: var(--step-1);
 }
 .prize-line strong {
-  font-family: var(--font-figure);
-  font-weight: 500;
+  letter-spacing: -0.02em;
+  font-weight: 800;
   font-size: var(--step-3);
   color: var(--accent);
   line-height: 1.1;
@@ -585,9 +557,9 @@ main {
 .facts {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 18px;
+  gap: 8px 20px;
   margin-top: 12px;
-  padding-top: 10px;
+  padding-top: 12px;
   border-top: var(--rule-hair) solid var(--line);
   color: var(--muted);
   font-size: var(--step--1);
@@ -620,20 +592,20 @@ main {
   border-color: var(--accent);
 }
 
-/* 카운트다운 — Grenze 숫자 */
+/* 카운트다운 */
 .countdown {
   display: flex;
   align-items: flex-end;
-  gap: 14px;
-  margin: 6px 0 4px;
+  gap: 16px;
+  margin: 8px 0 4px;
 }
 .countdown .unit {
   display: grid;
   justify-items: center;
 }
 .countdown .unit b {
-  font-family: var(--font-figure);
-  font-weight: 500;
+  letter-spacing: -0.02em;
+  font-weight: 800;
   font-size: var(--step-5);
   line-height: 1;
   font-variant-numeric: tabular-nums lining-nums;
@@ -655,9 +627,9 @@ main {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
-  padding: 9px 0;
+  padding: 8px 0;
   border-bottom: var(--rule-hair) solid var(--line);
 }
 .mini-list li:last-child {
@@ -681,9 +653,9 @@ main {
 }
 .empty {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   justify-items: start;
-  padding: 6px 0;
+  padding: 8px 0;
   color: var(--ink-2);
 }
 
@@ -691,10 +663,10 @@ main {
 .slip {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 5px;
+  gap: 4px;
   padding: 12px;
   border: var(--rule-hair) solid var(--ink);
-  border-top: var(--rule-double) double var(--ink);
+  border-top: var(--rule-hair) solid var(--line-strong);
   border-radius: var(--radius);
   background: var(--surface);
 }
@@ -702,9 +674,9 @@ main {
   display: grid;
   grid-template-rows: auto 1fr auto;
   justify-items: center;
-  gap: 3px;
+  gap: 4px;
   min-height: 52px;
-  padding: 5px 2px 4px;
+  padding: 4px 2px 4px;
   border: var(--rule-hair) solid var(--line);
   border-radius: var(--radius);
   background: transparent;
@@ -758,13 +730,13 @@ button.cell:hover {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 12px;
   font-size: var(--step--1);
   color: var(--muted);
 }
 .slip-legend .ramp {
   display: flex;
-  gap: 3px;
+  gap: 4px;
 }
 .slip-legend .ramp i {
   width: 16px;
@@ -778,30 +750,30 @@ button.cell:hover {
 .detail {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-top: 12px;
-  padding: 12px;
-  border-radius: var(--radius);
-  background: var(--surface-2);
-  border-top: var(--rule-hair) solid var(--ink);
+  gap: 16px;
 }
 .detail .ball {
   --size: 52px;
 }
 .detail dl {
+  flex: 1;
   display: grid;
-  grid-template-columns: repeat(3, auto);
-  gap: 2px 18px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
   margin: 0;
+}
+.detail dl > div {
+  display: grid;
+  gap: 4px;
 }
 .detail dt {
   font-size: var(--step--1);
   color: var(--muted);
 }
 .detail dd {
+  letter-spacing: -0.02em;
   margin: 0;
-  font-family: var(--font-figure);
-  font-weight: 500;
+  font-weight: 800;
   font-size: var(--step-2);
   line-height: 1.1;
 }
@@ -825,12 +797,12 @@ button.cell:hover {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 6px;
+  gap: 8px;
 }
 .rank-list li {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 .rank-list .ball {
   --size: 30px;
@@ -853,13 +825,11 @@ button.cell:hover {
 .chart .axis {
   fill: var(--muted);
   font-size: 11px;
-  font-family: 'Hanken Grotesk', var(--font-body);
 }
 .chart .label {
   fill: var(--ink-2);
   font-size: 11px;
   font-weight: 600;
-  font-family: 'Hanken Grotesk', var(--font-body);
 }
 .chart .ref {
   stroke: var(--ink-2);
@@ -879,7 +849,7 @@ button.cell:hover {
 .legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 14px;
+  gap: 4px 16px;
   margin-top: 8px;
   font-size: var(--step--1);
   color: var(--ink-2);
@@ -887,7 +857,7 @@ button.cell:hover {
 .legend span {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 .legend i {
   width: 12px;
@@ -903,7 +873,7 @@ button.cell:hover {
 }
 .tip {
   min-height: 1.6em;
-  margin-top: 6px;
+  margin-top: 8px;
   font-size: var(--step--1);
   color: var(--ink-2);
 }
@@ -911,7 +881,7 @@ button.cell:hover {
   display: flex;
   height: 14px;
   gap: 2px;
-  margin: 10px 0 8px;
+  margin: 12px 0 8px;
 }
 .split i {
   border-radius: 1px;
@@ -927,11 +897,11 @@ table.data {
   font-variant-numeric: tabular-nums;
 }
 table.data thead th {
-  border-bottom: var(--rule-double) double var(--ink);
+  border-bottom: var(--rule-hair) solid var(--line-strong);
 }
 table.data th,
 table.data td {
-  padding: 8px 6px;
+  padding: 8px 8px;
   border-bottom: var(--rule-hair) solid var(--line);
   text-align: left;
   white-space: nowrap;
@@ -964,7 +934,7 @@ details.table-toggle summary {
 .stats {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 14px 18px;
+  gap: 16px 20px;
 }
 @media (min-width: 640px) {
   .stats {
@@ -977,9 +947,9 @@ details.table-toggle summary {
   align-content: start;
 }
 .stat b {
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums lining-nums;
-  font-family: var(--font-figure);
-  font-weight: 500;
+  font-weight: 800;
   font-size: var(--step-3);
   line-height: 1.05;
   color: var(--ink);
@@ -997,14 +967,14 @@ details.table-toggle summary {
   gap: 8px;
 }
 .luck .big {
-  font-family: var(--font-figure);
-  font-weight: 500;
+  letter-spacing: -0.02em;
+  font-weight: 800;
   font-size: clamp(3.4rem, 15vw, 5.6rem);
   line-height: 0.9;
   color: var(--accent);
 }
 .verdict {
-  padding: 12px 14px;
+  padding: 12px 16px;
   border-top: var(--rule-hair) solid var(--ink);
   border-bottom: var(--rule-hair) solid var(--line);
   background: var(--surface-2);
@@ -1020,7 +990,7 @@ details.table-toggle summary {
   max-height: 62vh;
   width: 100%;
   border-radius: var(--radius);
-  border-top: var(--rule-double) double var(--ink);
+  border-top: var(--rule-hair) solid var(--line-strong);
   background: var(--cam-bg);
   color: var(--cam-ink);
 }
@@ -1064,7 +1034,7 @@ details.table-toggle summary {
   display: grid;
   place-content: center;
   justify-items: center;
-  gap: 14px;
+  gap: 16px;
   padding: 24px;
   text-align: center;
   background: var(--cam-idle);
@@ -1092,7 +1062,7 @@ details.table-toggle summary {
 }
 .field {
   display: grid;
-  gap: 6px;
+  gap: 8px;
   font-weight: 500;
   font-size: var(--step--1);
 }
@@ -1135,8 +1105,7 @@ details.table-toggle summary {
   border-radius: var(--radius);
   border: var(--rule-hair) solid var(--ink);
   color: var(--ink);
-  font-family: var(--font-figure);
-  font-weight: 500;
+  font-weight: 700;
   font-size: 0.9rem;
   flex: none;
 }
@@ -1166,9 +1135,9 @@ details.table-toggle summary {
   width: min(560px, 100%);
   max-height: 90dvh;
   overflow-y: auto;
-  padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
+  padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
   background: var(--surface);
-  border-top: var(--rule-double) double var(--ink);
+  border-top: var(--rule-hair) solid var(--line-strong);
   border-radius: var(--radius);
 }
 .result-head {
@@ -1186,7 +1155,7 @@ details.table-toggle summary {
 }
 .game-rows {
   list-style: none;
-  margin: 14px 0;
+  margin: 16px 0;
   padding: 0;
   display: grid;
   gap: 0;
@@ -1194,16 +1163,16 @@ details.table-toggle summary {
 .game-rows li {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 4px 10px;
+  gap: 4px 12px;
   align-items: center;
-  padding: 10px 0;
+  padding: 12px 0;
   border-bottom: var(--rule-hair) solid var(--line);
 }
 .game-rows li:last-child {
   border-bottom: 0;
 }
 .game-rows .balls {
-  gap: 5px;
+  gap: 4px;
 }
 .game-rows .ball {
   --size: 32px;
@@ -1212,14 +1181,14 @@ details.table-toggle summary {
   grid-column: 2;
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
   font-size: var(--step--1);
   color: var(--muted);
 }
 .celebrate {
-  margin: 10px 0 0;
-  padding: 12px 14px;
+  margin: 12px 0 0;
+  padding: 12px 16px;
   border-top: var(--rule-hair) solid var(--win);
   background: var(--win-soft);
   color: var(--win);
@@ -1235,13 +1204,13 @@ details.table-toggle summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
 }
 .round-head h3 {
   font-size: var(--step-1);
 }
 .ticket {
-  padding: 4px 0 6px;
+  padding: 4px 0 8px;
   border-top: var(--rule-hair) solid var(--line);
 }
 .ticket-head {
@@ -1265,12 +1234,12 @@ details.table-toggle summary {
   padding: 0;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 14px 12px;
+  gap: 16px 12px;
 }
 .badges li {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
 }
 .coin {
@@ -1313,8 +1282,7 @@ details.table-toggle summary {
   line-height: 1.35;
 }
 .badge-text b {
-  font-family: var(--font-head);
-  font-weight: 400;
+  font-weight: 700;
   font-size: var(--step-0);
 }
 .badge-text span {
@@ -1325,7 +1293,7 @@ details.table-toggle summary {
   color: var(--ink-2);
 }
 .share-preview {
-  margin-top: 14px;
+  margin-top: 16px;
   border-radius: var(--radius);
   overflow: hidden;
   background: var(--surface-2);
@@ -1350,7 +1318,7 @@ details.table-toggle summary {
   align-items: center;
   gap: 12px;
   max-width: calc(100% - 32px);
-  padding: 10px 10px 10px 16px;
+  padding: 12px 12px 12px 16px;
   border-radius: var(--radius);
   background: var(--ink);
   color: var(--bg);
@@ -1374,12 +1342,12 @@ details.table-toggle summary {
 .footer {
   max-width: 1120px;
   margin: 28px auto 0;
-  padding: 14px 2px 0;
-  border-top: var(--rule-double) double var(--ink);
+  padding: 16px 2px 0;
+  border-top: var(--rule-hair) solid var(--line-strong);
   color: var(--muted);
   font-size: 0.78rem;
   display: grid;
-  gap: 6px;
+  gap: 8px;
 }
 .footer a {
   color: var(--ink-2);
@@ -1405,14 +1373,14 @@ details.table-toggle summary {
   padding: 0;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
-  gap: 6px;
+  gap: 8px;
 }
 .rank-cell {
   width: 100%;
   display: grid;
   justify-items: center;
   gap: 4px;
-  padding: 6px 2px 7px;
+  padding: 8px 2px 8px;
   border: var(--rule-hair) solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
@@ -1445,17 +1413,17 @@ details.table-toggle summary {
 }
 .rank-cell[aria-pressed='true'],
 .gap-cell[aria-pressed='true'] {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 .rank-key {
   display: flex;
-  gap: 10px;
+  gap: 12px;
 }
 .rank-key .key {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 .rank-key .key::before {
   content: '';
@@ -1476,7 +1444,7 @@ details.table-toggle summary {
   padding: 0;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
-  gap: 6px;
+  gap: 8px;
 }
 .gap-cell {
   width: 100%;

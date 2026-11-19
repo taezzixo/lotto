@@ -82,7 +82,6 @@ export function Stats({ data }: { data: AppData }) {
         <section className="sheet" aria-labelledby="gap-title">
           <div className="sheet-head">
             <h3 id="gap-title">오래 쉰 번호</h3>
-            <p>마지막으로 나온 뒤 지난 회차</p>
           </div>
           <ol className="gap-row">
             {ranked(gap, 'desc')
@@ -101,17 +100,22 @@ export function Stats({ data }: { data: AppData }) {
         <section className="sheet" aria-labelledby="detail-title">
           <div className="sheet-head">
             <h3 id="detail-title">{sel}번 자세히</h3>
-            <p>위 순위표나 오래 쉰 번호를 누르세요</p>
           </div>
           <div className="detail" aria-live="polite">
             <Ball n={sel} />
             <dl>
-              <dt>출현</dt>
-              <dd>{freq[sel]}회</dd>
-              <dt>순위</dt>
-              <dd>{rankOf(sel)}위</dd>
-              <dt>쉰 회차</dt>
-              <dd>{gap[sel] === 0 ? '최신 회차' : `${gap[sel]}회`}</dd>
+              <div>
+                <dt>출현</dt>
+                <dd>{freq[sel]}회</dd>
+              </div>
+              <div>
+                <dt>순위</dt>
+                <dd>{rankOf(sel)}위</dd>
+              </div>
+              <div>
+                <dt>쉰 회차</dt>
+                <dd>{gap[sel] === 0 ? '최신' : `${gap[sel]}회`}</dd>
+              </div>
             </dl>
           </div>
         </section>

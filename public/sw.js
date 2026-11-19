@@ -1,5 +1,5 @@
 /* 로또 데이터 실험실 서비스 워커 — 앱 셸 오프라인, 데이터는 네트워크 우선 */
-const CACHE = 'lotto-lab-v3';
+const CACHE = 'lotto-lab-v4';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './favicon.svg', './icons/icon-192.png'];
 
 self.addEventListener('install', (e) => {

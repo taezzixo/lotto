@@ -20,9 +20,9 @@ async function drawCard(rep: HitReport): Promise<Blob> {
   const muted = '#62554a';
   const slip = '#2942ab'; // 군청 안료
   const theory = '#be7c1c';
-  const ko = "'Hanken Grotesk', 'Gothic A1', 'Apple SD Gothic Neo', sans-serif";
-  const head = "'Song Myung', 'Grenze', Georgia, serif";
-  const num = "'Grenze', Georgia, serif";
+  const ko = "'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', sans-serif";
+  const head = ko;
+  const num = ko;
 
   g.fillStyle = '#e9dcc7';
   g.fillRect(0, 0, W, H);
@@ -47,14 +47,14 @@ async function drawCard(rep: HitReport): Promise<Blob> {
   g.arc(160, 160, 38, 0, Math.PI * 2);
   g.stroke();
   g.fillStyle = '#f5eee0';
-  g.font = `500 40px ${num}`;
+  g.font = `800 34px ${num}`;
   g.textAlign = 'center';
   g.textBaseline = 'middle';
   g.fillText('45', 160, 163);
   g.textAlign = 'left';
   g.textBaseline = 'alphabetic';
   g.fillStyle = ink;
-  g.font = `400 46px ${head}`;
+  g.font = `800 46px ${head}`;
   g.fillText('로또 데이터 실험실 나의 적중률', 230, 176);
 
   // 운 지수
@@ -62,10 +62,10 @@ async function drawCard(rep: HitReport): Promise<Blob> {
   g.font = `700 36px ${ko}`;
   g.fillText('운 지수', 120, 320);
   g.fillStyle = slip;
-  g.font = `500 270px ${num}`;
+  g.font = `800 260px ${num}`;
   g.fillText(String(rep.luckIndex), 108, 560);
   g.fillStyle = ink;
-  g.font = `400 42px ${head}`;
+  g.font = `700 40px ${head}`;
   const top = rep.luckTop <= 0.5 ? `무작위로 산 사람 중 상위 ${Math.max(1, Math.round(rep.luckTop * 100))}%` : '평균보다 조금 덜 맞았어요';
   g.fillText(top, 120, 640);
   g.fillStyle = muted;

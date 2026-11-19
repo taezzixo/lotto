@@ -260,7 +260,6 @@ function ManualPanel({ data, actions }: { data: AppData; actions: Actions }) {
     <section className="sheet" aria-labelledby="manual-title">
       <div className="sheet-head">
         <h3 id="manual-title">번호 직접 입력</h3>
-        <p>한 장에 최대 5게임</p>
       </div>
       <label className="field" style={{ maxWidth: 260, marginBottom: 12 }}>
         회차

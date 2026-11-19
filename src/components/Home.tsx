@@ -24,7 +24,7 @@ export function Home({ data, tickets, actions }: { data: AppData; tickets: Ticke
 
   return (
     <div className="view">
-      <section className="stage fibre" aria-labelledby="latest-title">
+      <section className="stage" aria-labelledby="latest-title">
         <div className="stage-title">
           <h1 id="latest-title">
             제<span className="num">{latest.no}</span>회 당첨번호

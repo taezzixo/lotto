@@ -109,7 +109,7 @@ export const Logo = () => (
   <svg viewBox="0 0 64 64" aria-hidden="true">
     <circle cx="32" cy="32" r="30" fill="var(--accent)" />
     <circle cx="32" cy="32" r="25" fill="none" stroke="var(--accent-ink)" strokeWidth="1.5" />
-    <text x="32" y="41" fontFamily="Grenze, Georgia, serif" fontWeight="500" fontSize="26" textAnchor="middle" fill="var(--accent-ink)">
+    <text x="32" y="41" fontFamily="'Pretendard Variable', Pretendard, sans-serif" fontWeight="800" fontSize="24" letterSpacing="-1" textAnchor="middle" fill="var(--accent-ink)">
       45
     </text>
   </svg>
