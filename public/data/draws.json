@@ -1248,5 +1248,6 @@
 {"no":1247,"date":"2026-10-24","nums":[8,14,21,22,42,45],"bonus":24,"first":{"winners":8,"prize":3637439250},"sales":118981044000,"firstType":{"auto":5,"semi":0,"manual":3},"status":"COMPLETE","source":"seed:gerosyab+smok95+testrapod"},
 {"no":1248,"date":"2026-10-31","nums":[16,18,27,36,38,42],"bonus":22,"first":{"winners":15,"prize":1933658450},"sales":121355508000,"firstType":{"auto":13,"semi":0,"manual":2},"status":"COMPLETE","source":"seed:gerosyab+smok95+testrapod"},
 {"no":1249,"date":"2026-11-07","nums":[2,11,16,25,34,35],"bonus":14,"first":{"winners":14,"prize":2025045509},"sales":118161409000,"firstType":{"auto":7,"semi":0,"manual":7},"status":"COMPLETE","source":"seed:gerosyab+smok95+testrapod"},
-{"no":1250,"date":"2026-11-14","nums":[1,5,18,23,27,28],"bonus":8,"first":{"winners":9,"prize":3103164459},"sales":116731227000,"firstType":{"auto":9,"semi":0,"manual":0},"status":"COMPLETE","source":"seed:gerosyab+smok95+testrapod"}
+{"no":1250,"date":"2026-11-14","nums":[1,5,18,23,27,28],"bonus":8,"first":{"winners":9,"prize":3103164459},"sales":116731227000,"firstType":{"auto":9,"semi":0,"manual":0},"status":"COMPLETE","source":"seed:gerosyab+smok95+testrapod"},
+{"no":1251,"date":"2026-11-21","nums":[14,18,19,29,40,45],"bonus":1,"first":{"winners":14,"prize":2068843286},"sales":116992886000,"firstType":{"auto":14,"semi":0,"manual":0},"source":"dhlottery","status":"COMPLETE"}
 ]
