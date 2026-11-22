@@ -1,31 +1,31 @@
 {
  "latest": {
-  "no": 1250,
-  "date": "2026-11-14",
+  "no": 1251,
+  "date": "2026-11-21",
   "nums": [
-   1,
-   5,
+   14,
    18,
-   23,
-   27,
-   28
+   19,
+   29,
+   40,
+   45
   ],
-  "bonus": 8,
+  "bonus": 1,
   "first": {
-   "winners": 9,
-   "prize": 3103164459
+   "winners": 14,
+   "prize": 2068843286
   },
-  "sales": 116731227000,
+  "sales": 116992886000,
   "firstType": {
-   "auto": 9,
+   "auto": 14,
    "semi": 0,
    "manual": 0
   },
-  "status": "COMPLETE",
-  "source": "seed:gerosyab+smok95+testrapod"
+  "source": "dhlottery",
+  "status": "COMPLETE"
  },
- "count": 1250,
- "nextRound": 1251,
- "nextDrawAt": "2026-11-21T20:35:00+09:00",
- "updatedAt": "2026-11-18T12:00:00+09:00"
+ "count": 1251,
+ "nextRound": 1252,
+ "nextDrawAt": "2026-11-28T20:35:00+09:00",
+ "updatedAt": "2026-11-22T03:41:05+09:00"
 }
