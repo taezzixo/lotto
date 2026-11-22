@@ -10,7 +10,7 @@
 | # | 항목 | 청약맵 | 로또 데이터 실험실 |
 | --- | --- | --- | --- |
 | 1 | 저장소 | `dash_housing` 공개 | `taezzixo/lotto` |
-| 2 | 수집 주기 | 매일 06:17 KST | **토 21:00~23:50 KST 10분 간격** + 일·월 09:07 백스톱(추첨이 토 20:35) |
+| 2 | 수집 주기 | 매일 06:17 KST | **토 21:00~23:50 KST 10분 간격** + 일·월 09:07 백스톱(추첨이 토 20:35). GitHub 예약이 몇 시간씩 밀려서(2026-11-21 약 7시간) **Cloudflare Cron Trigger가 같은 시각에 사이트 데이터를 보고 최신 회차가 없을 때만 `workflow_dispatch`로 수집을 깨움**(`worker/index.ts`, 2026-11-22) |
 | 3 | 출처 | 공공데이터포털 API(키 필요) | 동행복권 개편 후 JSON(1순위) + 독립 미러 3곳(smok95, Testrapod, gerosyab) 다수결. **키 없음, Secrets 불필요**(비상용 `LOTTO_OFFICIAL_BASE`만 선택) |
 | 4 | 수집 스크립트 | Node `fetch-notices.mjs` | **Python 표준 라이브러리** `scripts/update_lotto.py`(의존성 0, 단위 테스트 13개) |
 | 5 | 핵심 항목 | `Notice` | `Draw`. 고정 id = 회차 번호, 출처(`source`), 품질(`status`: COMPLETE·PARTIAL·PROVISIONAL), 날짜(`date`). 위치·원문 링크는 해당 없음 |
@@ -42,9 +42,10 @@ flowchart LR
     IS["이슈 data-pipeline<br/>(수집 실패 알림)"]
   end
 
-  subgraph CF["Cloudflare Workers (정적 자산)"]
+  subgraph CF["Cloudflare Workers (정적 자산 + Cron)"]
     B["빌드: tsc → vite build"]
     D["배포: wrangler deploy"]
+    K["Cron 토 21:00~23:50·일 09:07<br/>latest.json 확인 → 없으면 수집 깨우기"]
   end
 
   subgraph USER["사용자 브라우저 (주로 휴대폰)"]
@@ -58,6 +59,7 @@ flowchart LR
   W -->|1순위| A1
   W -->|공식 실패 시 다수결| A2
   W -->|봇 커밋| R
+  K -->|workflow_dispatch GH_TOKEN| W
   W -.실패.-> IS
   C --> CI
   R -->|main 푸시| B
@@ -145,19 +147,21 @@ lotto/
 │  ├─ update_lotto.py             # 수집 (표준 라이브러리)
 │  ├─ prerender.mjs               # 회차별 정적 페이지·robots·sitemap (빌드 후)
 │  └─ test_update_lotto.py        # 수집·데이터 무결성 테스트
+├─ worker/index.ts                # Cloudflare Worker: 정적 자산 + 토요일 밤 수집 깨우기(Cron)
 ├─ src/
 │  ├─ App.tsx · main.tsx · types.ts · styles.css
 │  ├─ components/                 # Home · Stats · Scan · Analysis · Records · ResultSheet · Ball · Slip · Charts · Icons
-│  └─ lib/                        # lotto · qr · schedule · stats · report · strategy · store · format (+ lib.test.ts)
+│  └─ lib/                        # lotto · qr · schedule · stats · report · strategy · store · format · collect (+ lib.test.ts)
 └─ docs/                          # PRD · ARCHITECTURE · DESIGN_SYSTEM · HANDOFF · API_KEYS · PLAN_ORIGINAL
 ```
 
 ## 6. 키 배치
 
-비밀 키가 없습니다. 동행복권이 해외 IP를 다시 막으면 국내 릴레이 주소를 GitHub Secret `LOTTO_OFFICIAL_BASE`에 넣습니다(선택). 목록은 [`docs/API_KEYS.md`](API_KEYS.md)에 있습니다.
+수집 자체에는 비밀 키가 없습니다. Cloudflare Worker가 GitHub 수집을 깨우는 데 `GH_TOKEN`(이 저장소 Actions 읽기·쓰기만 허용한 fine-grained 토큰) 하나를 Cloudflare 비밀값으로 씁니다. 동행복권이 해외 IP를 다시 막으면 국내 릴레이 주소를 GitHub Secret `LOTTO_OFFICIAL_BASE`에 넣습니다(선택). 목록은 [`docs/API_KEYS.md`](API_KEYS.md)에 있습니다.
 
 ## 7. 알려진 제약
 
 - 이 작업 환경(클라우드 세션)의 네트워크 정책이 동행복권과 미러 호스트를 막고 있습니다. 시드 데이터는 미러 저장소를 git으로 받아 3곳을 대조해 만들었습니다. **실제 공식 엔드포인트 호출은 GitHub Actions 첫 실행에서 확인**해야 합니다.
 - QR 형식은 오픈소스 파서 2종을 기준으로 구현했습니다. 실물 복권(자동·수동·반자동, 1~5게임)으로 검증해야 합니다.
-- 예약 실행은 기본 브랜치(main)에서만 동작합니다.
+- 예약 실행은 기본 브랜치(main)에서만 동작합니다. GitHub 예약은 지연·누락될 수 있어 Cloudflare Cron이 정시 깨우기를 맡고, GitHub 예약은 예비로 남겨 둡니다.
+- 봇의 데이터 커밋(`GITHUB_TOKEN` 푸시)은 `check` 작업을 다시 돌리지 않습니다. 데이터에 기대는 테스트는 특정 회차가 "아직 추첨 전"이라고 가정하면 안 됩니다(2026-11-22 1251회 반영 뒤 한 건 수정).

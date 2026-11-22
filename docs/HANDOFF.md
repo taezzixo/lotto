@@ -2,7 +2,16 @@
 
 새 대화를 시작하면 저장소의 `CLAUDE.md`를 읽고, 이 문서의 「다음 할 일」을 확인합니다. Notion 원본은 「대시보드 v1.0 / [로또 데이터 실험실] (lotto) / 인계 문서」이며, 한쪽이 바뀌면 다른 쪽도 맞춥니다.
 
-마지막 갱신: 2026-11-22 (제1251회 반영, 예약 실행 7시간 지연)
+마지막 갱신: 2026-11-22 (v0.8: Cloudflare Cron 정시 수집 깨우기)
+
+## 2026-11-22 변경 — v0.8 (Cloudflare Cron으로 정시 수집 깨우기, 사용자 결정)
+
+- 배경: GitHub 예약 실행이 토요일 밤 약 7시간 밀림(제1251회는 일 03:40 반영)
+- `worker/index.ts`: Cloudflare Worker가 정적 자산을 그대로 서빙하고, Cron(토 21:00~23:50 KST 10분 간격 + 일 09:07)마다 배포된 `latest.json`을 읽어 최신 회차가 없거나 잠정이면 GitHub `workflow_dispatch`로 수집을 시작. 확정이면 건너뜀(`src/lib/collect.ts` + 테스트)
+- `wrangler.jsonc`: `main`, `assets.binding`, `triggers.crons`, `vars`, 로그(observability) 추가. wrangler 4.45 dry-run·로컬 dev에서 자산 서빙과 예약 실행(「제1251회 확정 반영됨 → 건너뜀」) 확인
+- GitHub 예약 실행은 예비로 유지(둘이 겹쳐도 같은 동시성 그룹이라 차례로 돌고, 확정이면 수 초 만에 끝남)
+- 같이 고침: 1251회 반영으로 깨진 테스트 1건(「1251회 = 추첨 전」 가정 → 미래 회차 9999), 실수로 커밋된 `preview.log` 제거
+- **사람이 할 일**: `GH_TOKEN` 만들어 Cloudflare 비밀값으로 넣기(`docs/API_KEYS.md` 절차). 넣기 전에는 Cron이 "GH_TOKEN 없음"만 남기고 GitHub 예약으로 수집
 
 ## 2026-11-22 일요일 재확인 (09:30 KST) — 제1251회 반영 완료
 
@@ -110,6 +119,7 @@
 - [x] Cloudflare 빌드 변수 `SITE_URL` 등록 (2026-11-19) → 다음 빌드부터 sitemap·canonical 생성
 - [ ] 운영 주소 확인: Cloudflare Worker 이름이 `lotto`(빌드 기록 기준)라서 주소는 `https://lotto.kth95280.workers.dev`로 추정. `wrangler.jsonc` 이름도 `lotto`로 맞춤(2026-11-19). `SITE_URL`도 이 주소여야 함
 - [x] v0.2를 `main`에 반영 허락 (2026-11-19)
+- [ ] **`GH_TOKEN` 만들어 Cloudflare `lotto` Worker 비밀값으로 넣기**(v0.8, 절차: `docs/API_KEYS.md`)
 - [ ] 실물 복권 QR로 휴대폰에서 스캔해 보기(아이폰·안드로이드 각각), 이상하면 알려 주기
 - [ ] (선택) 토요일 첫 예약 실행 뒤 Actions 로그 확인 — 공식 엔드포인트 응답 여부
 
@@ -124,7 +134,6 @@
 ## 결정 대기
 
 
-- 수집 정시성: GitHub 예약 지연 대책(Cloudflare Cron → workflow_dispatch) 도입 여부
 - 도메인 구매 여부 (서비스 이름은 「로또 데이터 실험실」로 확정, 2026-11-19)
 - 분석 번호 「내 기록에 담기」를 리포트에 기본 포함할지(현재 기본 제외, 토글로 포함)
 
@@ -139,5 +148,6 @@
 | 2026-11-18 | 인계 문서 (`docs/HANDOFF.md`) | [로또 데이터 실험실] 인계 문서 (새 대화 시작용) |
 | 2026-11-19 | 디자인 시스템 규칙·인계 문서 v0.6 (글꼴 A안) | 같은 두 페이지 갱신 |
 | 2026-11-19 | 디자인 시스템 규칙·인계 문서 v0.7 (다크 남색) | 같은 두 페이지 갱신 |
+| 2026-11-22 | 인계 문서 v0.8·시스템 구성도(Cloudflare Cron) | 같은 두 페이지 갱신 |
 
 - 허브: https://app.notion.com/p/41c6a73e1559813887c9e112887acafc · 아이디어노트 「[대시보드 제조기] 로또 번호 예측기」 단계를 「진행 중」으로 바꾸고 허브 링크를 남김

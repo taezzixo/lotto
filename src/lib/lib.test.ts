@@ -10,6 +10,7 @@ import { gradeTickets, hitReport, luckPercentile } from './report.ts';
 import { STRATEGIES, backtest, pickFor, randomPick, summarize } from './strategy.ts';
 import { addTicket, exportFile, mergeImport } from './store.ts';
 import { dateKo, won } from './format.ts';
+import { collectDecision } from './collect.ts';
 
 const draws: Draw[] = JSON.parse(readFileSync(new URL('../../public/data/draws.json', import.meta.url), 'utf8'));
 const byNo = new Map(draws.map((d) => [d.no, d]));
@@ -138,7 +139,7 @@ test('내 기록 채점과 리포트', () => {
       { slot: 'A', type: 'auto', nums: [1, 5, 18, 23, 27, 28] },
       { slot: 'B', type: 'manual', nums: [1, 5, 18, 40, 41, 42] },
     ] },
-    { id: 'b', source: 'qr', round: 1251, createdAt: '2026-11-18T10:00:00Z', games: [{ slot: 'A', type: 'auto', nums: [1, 2, 3, 4, 5, 6] }] },
+    { id: 'b', source: 'qr', round: 9999, createdAt: '2026-11-18T10:00:00Z', games: [{ slot: 'A', type: 'auto', nums: [1, 2, 3, 4, 5, 6] }] },
   ];
   const { graded, pending } = gradeTickets(tickets, byNo);
   assert.equal(graded.length, 2);
@@ -247,4 +248,18 @@ test('출현 순위표: 45개, 공동 순위', async () => {
   // 13·27번 모두 184회 → 둘 다 2위, 다음은 4위
   assert.deepEqual(t.slice(1, 4).map((r) => [r.n, r.rank]), [[13, 2], [27, 2], [18, 4]]);
   assert.ok(t.every((r, i) => i === 0 || r.value <= t[i - 1].value));
+});
+
+test('수집 깨우기 판단: 추첨 직후 대기, 미반영·잠정이면 깨움, 확정이면 건너뜀', () => {
+  const sat2105 = new Date('2026-11-21T12:05:00Z'); // 토 21:05 KST, 제1251회 추첨 30분 뒤
+  const sat2040 = new Date('2026-11-21T11:40:00Z'); // 추첨 5분 뒤
+  assert.equal(collectDecision({ no: 1250, status: 'COMPLETE' }, sat2040).dispatch, false);
+  const d = collectDecision({ no: 1250, status: 'COMPLETE' }, sat2105);
+  assert.equal(d.expected, 1251);
+  assert.equal(d.dispatch, true);
+  assert.equal(collectDecision({ no: 1251, status: 'PARTIAL' }, sat2105).dispatch, true);
+  assert.equal(collectDecision({ no: 1251, status: 'COMPLETE' }, sat2105).dispatch, false);
+  assert.equal(collectDecision(null, sat2105).dispatch, true);
+  const sun0907 = new Date('2026-11-22T00:07:00Z');
+  assert.equal(collectDecision({ no: 1251, status: 'COMPLETE' }, sun0907).dispatch, false);
 });

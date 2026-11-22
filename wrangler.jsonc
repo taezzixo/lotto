@@ -1,5 +1,10 @@
 {
   "name": "lotto",
+  "main": "worker/index.ts",
   "compatibility_date": "2026-09-01",
-  "assets": { "directory": "./dist", "not_found_handling": "single-page-application" }
+  "assets": { "directory": "./dist", "binding": "ASSETS", "not_found_handling": "single-page-application" },
+  // 토 21:00~23:50 KST 10분 간격 + 일 09:07 KST 백스톱 (UTC 기준). 이미 확정이면 GitHub를 부르지 않음.
+  "triggers": { "crons": ["*/10 12-14 * * SAT", "7 0 * * SUN"] },
+  "vars": { "GH_REPO": "taezzixo/lotto", "GH_WORKFLOW": "deploy.yml", "GH_REF": "main" },
+  "observability": { "enabled": true }
 }
