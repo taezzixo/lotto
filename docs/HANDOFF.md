@@ -11,6 +11,7 @@
 - `wrangler.jsonc`: `main`, `assets.binding`, `triggers.crons`, `vars`, 로그(observability) 추가. wrangler 4.45 dry-run·로컬 dev에서 자산 서빙과 예약 실행(「제1251회 확정 반영됨 → 건너뜀」) 확인
 - GitHub 예약 실행은 예비로 유지(둘이 겹쳐도 같은 동시성 그룹이라 차례로 돌고, 확정이면 수 초 만에 끝남)
 - 같이 고침: 1251회 반영으로 깨진 테스트 1건(「1251회 = 추첨 전」 가정 → 미래 회차 9999), 실수로 커밋된 `preview.log` 제거
+- main 반영(사용자 허락 2026-11-22): main `3f35efe`
 - **사람이 할 일**: `GH_TOKEN` 만들어 Cloudflare 비밀값으로 넣기(`docs/API_KEYS.md` 절차). 넣기 전에는 Cron이 "GH_TOKEN 없음"만 남기고 GitHub 예약으로 수집
 
 ## 2026-11-22 일요일 재확인 (09:30 KST) — 제1251회 반영 완료
