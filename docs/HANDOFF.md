@@ -12,7 +12,8 @@
 - GitHub 예약 실행은 예비로 유지(둘이 겹쳐도 같은 동시성 그룹이라 차례로 돌고, 확정이면 수 초 만에 끝남)
 - 같이 고침: 1251회 반영으로 깨진 테스트 1건(「1251회 = 추첨 전」 가정 → 미래 회차 9999), 실수로 커밋된 `preview.log` 제거
 - main 반영(사용자 허락 2026-11-22): main `3f35efe`
-- **사람이 할 일**: `GH_TOKEN` 만들어 Cloudflare 비밀값으로 넣기(`docs/API_KEYS.md` 절차). 넣기 전에는 Cron이 "GH_TOKEN 없음"만 남기고 GitHub 예약으로 수집
+- `GH_TOKEN` 등록 완료(사용자, 2026-11-22: fine-grained `lotto-cron`, taezzixo/lotto만, Actions 읽기·쓰기, 2027-11-22 만료 → 만료 전 재발급)
+- ~~**사람이 할 일**~~ 완료: `GH_TOKEN` 만들어 Cloudflare 비밀값으로 넣기(`docs/API_KEYS.md` 절차). 넣기 전에는 Cron이 "GH_TOKEN 없음"만 남기고 GitHub 예약으로 수집
 
 ## 2026-11-22 일요일 재확인 (09:30 KST) — 제1251회 반영 완료
 
@@ -120,12 +121,13 @@
 - [x] Cloudflare 빌드 변수 `SITE_URL` 등록 (2026-11-19) → 다음 빌드부터 sitemap·canonical 생성
 - [ ] 운영 주소 확인: Cloudflare Worker 이름이 `lotto`(빌드 기록 기준)라서 주소는 `https://lotto.kth95280.workers.dev`로 추정. `wrangler.jsonc` 이름도 `lotto`로 맞춤(2026-11-19). `SITE_URL`도 이 주소여야 함
 - [x] v0.2를 `main`에 반영 허락 (2026-11-19)
-- [ ] **`GH_TOKEN` 만들어 Cloudflare `lotto` Worker 비밀값으로 넣기**(v0.8, 절차: `docs/API_KEYS.md`)
+- [x] `GH_TOKEN` 만들어 Cloudflare `lotto` Worker 비밀값으로 넣기 (2026-11-22). **2027-11-22 만료 전 재발급**
 - [ ] 실물 복권 QR로 휴대폰에서 스캔해 보기(아이폰·안드로이드 각각), 이상하면 알려 주기
 - [ ] (선택) 토요일 첫 예약 실행 뒤 Actions 로그 확인 — 공식 엔드포인트 응답 여부
 
 ## 다음 할 일 (Claude)
 
+0. 11/28(토) 21:40 KST: Cloudflare Cron이 `workflow_dispatch`로 제1252회 수집을 정시에 시작했는지 확인(예약 알림 걸어 둠)
 1. 첫 토요일(11/21) 예약 수집 결과 확인: 1등 집계 전 응답 형태(PRD §15 #3). 공식 엔드포인트 접근은 2026-11-19 확인 완료
 2. 실물 QR 검증 결과 반영(유형 문자 q/m/s/n, 1~4게임 티켓)
 3. ~~v0.2: PWA, 공유 카드, 배지~~ ~~회차별 페이지, 추첨 직후 대체 조회~~ 완료
