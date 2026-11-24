@@ -196,3 +196,91 @@ export function Legend({ items }: { items: { label: string; color: string; line?
     </div>
   );
 }
+
+interface LinePoint {
+  x: number;
+  y: number;
+  tip: string;
+}
+
+/** 누적 지표 선 그래프. band = ±값 사이를 옅게 칠하고 경계선을 점선으로 */
+export function LineChart({
+  points,
+  height = 200,
+  band,
+  ariaLabel,
+  format = (v) => v.toFixed(1),
+  xLabel = (x) => String(x),
+}: {
+  points: LinePoint[];
+  height?: number;
+  band?: number;
+  ariaLabel: string;
+  format?: (v: number) => string;
+  xLabel?: (x: number) => string;
+}) {
+  const [wrap, width] = useWidth<HTMLDivElement>();
+  const [active, setActive] = useState<number | null>(null);
+  if (!points.length) return null;
+  const iw = width - PAD.left - PAD.right;
+  const ih = height - PAD.top - PAD.bottom;
+  const lim = Math.max(band ?? 0, ...points.map((p) => Math.abs(p.y))) * 1.15 || 1;
+  const x0 = points[0].x;
+  const x1 = points[points.length - 1].x;
+  const x = (v: number) => PAD.left + ((v - x0) / Math.max(1, x1 - x0)) * iw;
+  const y = (v: number) => PAD.top + ih / 2 - (v / lim) * (ih / 2);
+  const d = points.map((p, i) => `${i ? 'L' : 'M'}${x(p.x).toFixed(1)},${y(p.y).toFixed(1)}`).join('');
+  const ticks = [-Math.floor(lim), 0, Math.floor(lim)].filter((t, i, a) => a.indexOf(t) === i);
+  const xt = [x0, Math.round((x0 + x1) / 2), x1];
+  const nearest = (px: number) => {
+    const v = x0 + ((px - PAD.left) / iw) * (x1 - x0);
+    let best = 0;
+    for (let i = 1; i < points.length; i++) if (Math.abs(points[i].x - v) < Math.abs(points[best].x - v)) best = i;
+    return best;
+  };
+  const onKey = (e: KeyboardEvent) => {
+    const stepN = Math.max(1, Math.round(points.length / 50));
+    if (e.key === 'ArrowRight') setActive((a) => Math.min(points.length - 1, (a ?? -1) + stepN));
+    if (e.key === 'ArrowLeft') setActive((a) => Math.max(0, (a ?? points.length) - stepN));
+  };
+  const cur = active !== null ? points[active] : points[points.length - 1];
+  return (
+    <div ref={wrap}>
+      <svg
+        className="chart"
+        width={width}
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        role="img"
+        aria-label={ariaLabel}
+        tabIndex={0}
+        onKeyDown={onKey}
+        onBlur={() => setActive(null)}
+        onPointerLeave={() => setActive(null)}
+        onPointerMove={(e) => setActive(nearest(e.clientX - e.currentTarget.getBoundingClientRect().left))}
+      >
+        {band !== undefined && <rect className="band" x={PAD.left} width={iw} y={y(band)} height={y(-band) - y(band)} />}
+        {ticks.map((t) => (
+          <g key={t}>
+            <line className={t === 0 ? 'zero' : 'grid'} x1={PAD.left} x2={width - PAD.right} y1={y(t)} y2={y(t)} />
+            <text className="axis" x={PAD.left - 6} y={y(t) + 4} textAnchor="end">
+              {format(t)}
+            </text>
+          </g>
+        ))}
+        {band !== undefined &&
+          [band, -band].map((b) => <line key={b} className="ref" x1={PAD.left} x2={width - PAD.right} y1={y(b)} y2={y(b)} />)}
+        <path className="line" d={d} />
+        {xt.map((t, i) => (
+          <text key={i} className="axis" x={x(t)} y={height - 8} textAnchor={i === 0 ? 'start' : i === 2 ? 'end' : 'middle'}>
+            {xLabel(t)}
+          </text>
+        ))}
+        <circle className="dot" cx={x(cur.x)} cy={y(cur.y)} r={4} />
+      </svg>
+      <p className="tip" aria-live="polite">
+        {cur.tip}
+      </p>
+    </div>
+  );
+}

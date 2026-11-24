@@ -877,6 +877,59 @@ button.cell:hover {
 .chart g.dim .bar {
   opacity: 0.35;
 }
+.chart .line {
+  fill: none;
+  stroke: var(--series-1);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.chart .band {
+  fill: var(--surface-2);
+}
+.chart .zero {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+.chart .dot {
+  fill: var(--series-1);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+/* 실험실 픽 규칙 가중치 */
+.weights {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.weights li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 3.5em;
+  gap: 4px 12px;
+  align-items: center;
+  font-size: var(--step--1);
+}
+.weights .wbar {
+  grid-column: 1 / -1;
+  height: 6px;
+  background: var(--surface-2);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.weights .wbar i {
+  display: block;
+  height: 100%;
+  background: var(--series-1);
+}
+.weights b {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.weights small {
+  grid-column: 1 / -1;
+  color: var(--muted);
+}
 .legend {
   display: flex;
   flex-wrap: wrap;

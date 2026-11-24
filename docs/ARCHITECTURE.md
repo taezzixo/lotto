@@ -151,7 +151,7 @@ lotto/
 ├─ src/
 │  ├─ App.tsx · main.tsx · types.ts · styles.css
 │  ├─ components/                 # Home · Stats · Scan · Analysis · Records · ResultSheet · Ball · Slip · Charts · Icons
-│  └─ lib/                        # lotto · qr · schedule · stats · report · strategy · store · format · collect (+ lib.test.ts)
+│  └─ lib/                        # lotto · qr · schedule · stats · report · strategy · store · format · collect · labpick (+ lib.test.ts)
 └─ docs/                          # PRD · ARCHITECTURE · DESIGN_SYSTEM · HANDOFF · API_KEYS · PLAN_ORIGINAL
 ```
 

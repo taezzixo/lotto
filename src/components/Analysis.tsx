@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import type { Actions, AppData } from '../App.tsx';
-import { STRATEGIES, backtest, pickFor, summarize, type StrategyId } from '../lib/strategy.ts';
+import { STRATEGIES, backtest, labRecords, pickFor, summarize, type StrategyId } from '../lib/strategy.ts';
+import { LAB_SCORE_FROM, NEAR_EXPECTED, runLab } from '../lib/labpick.ts';
 import { EXPECTED_MATCH } from '../lib/lotto.ts';
 import { currentSalesRound } from '../lib/schedule.ts';
 import { newId } from '../lib/store.ts';
 import { pct } from '../lib/format.ts';
 import { Ball, MatchBalls } from './Ball.tsx';
-import { BarChart } from './Charts.tsx';
+import { BarChart, LineChart } from './Charts.tsx';
 import { IconPlus } from './Icons.tsx';
 
 const VERDICT = {
@@ -16,13 +17,20 @@ const VERDICT = {
 } as const;
 
 export function Analysis({ data, actions }: { data: AppData; actions: Actions }) {
-  const [id, setId] = useState<StrategyId>('hot');
-  const all = useMemo(() => STRATEGIES.map((s) => ({ ...s, records: backtest(s.id, data.draws) })), [data.draws]);
+  const [id, setId] = useState<StrategyId>('lab');
+  const lab = useMemo(() => runLab(data.draws), [data.draws]);
+  const all = useMemo(
+    () => STRATEGIES.map((s) => ({ ...s, records: s.id === 'lab' ? labRecords(lab.weeks) : backtest(s.id, data.draws) })),
+    [data.draws, lab],
+  );
   const summaries = useMemo(() => all.map((s) => ({ id: s.id, name: s.name, sum: summarize(s.records) })), [all]);
   const cur = all.find((s) => s.id === id)!;
   const sum = summaries.find((s) => s.id === id)!.sum;
   const next = Math.max(data.latest.no + 1, currentSalesRound());
-  const picks = pickFor(id, data.draws, next);
+  const picks = id === 'lab' ? lab.next.picks : pickFor(id, data.draws, next);
+  const labScored = lab.weeks.filter((w) => w.round >= LAB_SCORE_FROM);
+  const labNear = labScored.reduce((a, w) => a + w.near, 0) / Math.max(1, labScored.length);
+  const labZ = labScored.length ? labScored[labScored.length - 1].z : 0;
   const last52 = cur.records.slice(-52);
   const recent = cur.records.slice(-12).reverse();
   const recentSum = summarize(cur.records.slice(-52));
@@ -63,11 +71,20 @@ export function Analysis({ data, actions }: { data: AppData; actions: Actions })
           <p className="notice" style={{ marginBottom: 12 }}>
             {cur.rule}
           </p>
-          <span className="balls" style={{ gap: 8 }}>
+          <span className="balls" style={{ gap: id === 'lab' ? 6 : 8 }}>
             {picks.map((n) => (
-              <Ball key={n} n={n} style={{ ['--size' as string]: '46px' }} />
+              <Ball key={n} n={n} style={{ ['--size' as string]: id === 'lab' ? 'clamp(34px, 9vw, 46px)' : '46px' }} />
             ))}
+            {id === 'lab' && (
+              <>
+                <span className="plus" aria-hidden="true">
+                  +
+                </span>
+                <Ball n={lab.next.bonusPick} label={`보너스 후보 ${lab.next.bonusPick}번`} style={{ ['--size' as string]: 'clamp(34px, 9vw, 46px)' }} />
+              </>
+            )}
           </span>
+          {id === 'lab' && <p className="notice" style={{ marginTop: 8 }}>+ 뒤의 번호는 보너스 후보예요. 내 기록에는 앞의 6개만 담겨요.</p>}
           <div className="actions" style={{ marginTop: 14 }}>
             <button type="button" className="btn ghost" onClick={savePick}>
               <IconPlus />
@@ -100,16 +117,68 @@ export function Analysis({ data, actions }: { data: AppData; actions: Actions })
               <b>{sum.wins}주</b>
               <small>{pct(sum.wins / sum.weeks)} (이론값 2.4%)</small>
             </div>
-            <div className="stat">
-              <span>최근 52주 평균</span>
-              <b>{recentSum.avg.toFixed(2)}개</b>
-              <small>최고 {Math.max(...last52.map((r) => r.matched))}개 일치</small>
-            </div>
+            {id === 'lab' ? (
+              <div className="stat">
+                <span>보너스 포함 7개 겹침</span>
+                <b>{labNear.toFixed(2)}개</b>
+                <small>무작위 이론값 {NEAR_EXPECTED.toFixed(2)}개</small>
+              </div>
+            ) : (
+              <div className="stat">
+                <span>최근 52주 평균</span>
+                <b>{recentSum.avg.toFixed(2)}개</b>
+                <small>최고 {Math.max(...last52.map((r) => r.matched))}개 일치</small>
+              </div>
+            )}
           </div>
           <p className="verdict" style={{ marginTop: 14 }}>
             {VERDICT[sum.verdict]}
           </p>
         </section>
+
+        {id === 'lab' && (
+          <>
+            <section className="sheet" aria-labelledby="evidence-title">
+              <div className="sheet-head">
+                <h3 id="evidence-title">규칙이 무작위보다 낫다는 증거</h3>
+                <p>제{LAB_SCORE_FROM}회부터 누적</p>
+              </div>
+              <LineChart
+                ariaLabel={`실험실 픽 누적 증거 점수, 제${LAB_SCORE_FROM}회부터 제${data.latest.no}회까지. 최신 ${labZ.toFixed(2)}`}
+                height={200}
+                band={1.96}
+                format={(v) => v.toFixed(0)}
+                xLabel={(x) => `${x}회`}
+                points={labScored
+                  .filter((_, i, a) => i % 4 === 0 || i === a.length - 1)
+                  .map((w) => ({ x: w.round, y: w.z, tip: `제${w.round}회까지 증거 점수 ${w.z.toFixed(2)}` }))}
+              />
+              <p className="notice">
+                0이면 무작위와 같고, 위쪽 점선(1.96)을 넘어 계속 머물러야 「무작위보다 낫다」고 말할 수 있어요. 지금은 {labZ.toFixed(2)}로 색칠한 띠 안이에요.
+              </p>
+            </section>
+            <section className="sheet" aria-labelledby="rules-title">
+              <div className="sheet-head">
+                <h3 id="rules-title">지금 실험실 픽의 규칙 구성</h3>
+              </div>
+              <ul className="weights">
+                {lab.weights.map((w) => (
+                  <li key={w.id}>
+                    <span>{w.name}</span>
+                    <b>{Math.round(w.weight * 100)}%</b>
+                    <span className="wbar" aria-hidden="true">
+                      <i style={{ width: `${(w.weight / lab.weights[0].weight) * 100}%` }} />
+                    </span>
+                    <small>당첨번호의 평균 순위 {(w.perf * 100).toFixed(1)}점 (무작위 50점)</small>
+                  </li>
+                ))}
+              </ul>
+              <p className="notice" style={{ marginTop: 10 }}>
+                규칙마다 당첨번호를 상위에 올린 정도를 1회부터 매주 채점해 가중치를 고쳐요. 모든 규칙이 50점 안팎이라, 가중치 차이는 우연이 쌓인 결과에 가까워요.
+              </p>
+            </section>
+          </>
+        )}
 
         <section className="sheet span-2" aria-labelledby="weekly-title">
           <div className="sheet-head">
@@ -158,7 +227,7 @@ export function Analysis({ data, actions }: { data: AppData; actions: Actions })
             </table>
           </div>
           <p className="notice" style={{ marginTop: 10 }}>
-            네 방법 모두 무작위 이론값(0.8개, 13.3%) 근처예요. 과거 출현 패턴은 다음 추첨에 영향을 주지 않아요.
+            실험실 픽을 포함한 다섯 방법 모두 무작위 이론값(0.8개, 13.3%) 근처예요. 과거 출현 패턴은 다음 추첨에 영향을 주지 않아요.
           </p>
         </section>
 

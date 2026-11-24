@@ -11,6 +11,7 @@ import { STRATEGIES, backtest, pickFor, randomPick, summarize } from './strategy
 import { addTicket, exportFile, mergeImport } from './store.ts';
 import { dateKo, won } from './format.ts';
 import { collectDecision } from './collect.ts';
+import { LAB_RULES, NEAR_EXPECTED, runLab } from './labpick.ts';
 
 const draws: Draw[] = JSON.parse(readFileSync(new URL('../../public/data/draws.json', import.meta.url), 'utf8'));
 const byNo = new Map(draws.map((d) => [d.no, d]));
@@ -164,7 +165,7 @@ test('전략: 직전 데이터만 사용(미래 정보 누설 없음)', () => {
     assert.deepEqual(rr.picks, pickFor(id, draws.slice(0, 776), 777));
   }
   assert.deepEqual(randomPick(1251), randomPick(1251));
-  assert.equal(STRATEGIES.length, 4);
+  assert.equal(STRATEGIES.length, 5);
 });
 
 test('전략 요약: 주 수와 분포 합 일치, 무작위는 이론값 근처', () => {
@@ -262,4 +263,21 @@ test('수집 깨우기 판단: 추첨 직후 대기, 미반영·잠정이면 깨
   assert.equal(collectDecision(null, sat2105).dispatch, true);
   const sun0907 = new Date('2026-11-22T00:07:00Z');
   assert.equal(collectDecision({ no: 1251, status: 'COMPLETE' }, sun0907).dispatch, false);
+});
+
+test('실험실 픽: 미래 정보 없이 매주 다시 계산, 다음 회차 7개', () => {
+  const full = runLab(draws);
+  assert.equal(full.weeks.length, draws.length - 1); // 2회부터
+  assert.equal(full.next.round, draws[draws.length - 1].no + 1);
+  assert.equal(new Set([...full.next.picks, full.next.bonusPick]).size, 7);
+  // 800회 채점 결과 = 1~799회만 넣고 계산한 「다음 회차」 번호
+  const cut = runLab(draws.slice(0, 799));
+  const w800 = full.weeks.find((w) => w.round === 800)!;
+  assert.deepEqual(w800.picks, cut.next.picks);
+  assert.equal(w800.bonusPick, cut.next.bonusPick);
+  // 가중치 합 1, 규칙 성적은 무작위(0.5) 근처
+  assert.ok(Math.abs(full.weights.reduce((a, w) => a + w.weight, 0) - 1) < 1e-9);
+  assert.equal(full.weights.length, LAB_RULES.length);
+  for (const w of full.weights) assert.ok(Math.abs(w.perf - 0.5) < 0.02, `${w.id} ${w.perf}`);
+  assert.ok(NEAR_EXPECTED > 1.08 && NEAR_EXPECTED < 1.09);
 });
