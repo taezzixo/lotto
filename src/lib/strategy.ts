@@ -5,7 +5,7 @@ import { runLab } from './labpick.ts';
 export type StrategyId = 'lab' | 'hot' | 'cold' | 'top' | 'random';
 
 export const STRATEGIES: { id: StrategyId; name: string; rule: string }[] = [
-  { id: 'lab', name: '실험실 픽', rule: '규칙 10개의 점수를 합쳐 상위 6개, 7번째는 보너스 후보. 1회부터 매 회차 그 전 데이터만으로 각 규칙의 성적을 매겨 가중치를 다시 정해요' },
+  { id: 'lab', name: '실험실 픽', rule: '규칙 10개의 점수를 합쳐, 역대 당첨 조합에 가장 흔한 모양 6가지를 모두 갖춘 조합 중 점수가 가장 높은 6개를 골라요. 7번째는 보너스 후보. 1회부터 매 회차 그 전 데이터만으로 규칙 가중치를 다시 정해요' },
   { id: 'hot', name: '요즘 자주 나온 번호', rule: '직전 20회에서 가장 많이 나온 6개 (같으면 더 최근에 나온 번호)' },
   { id: 'cold', name: '오래 쉰 번호', rule: '마지막으로 나온 지 가장 오래된 6개' },
   { id: 'top', name: '역대 많이 나온 번호', rule: '1회부터 직전 회차까지 가장 많이 나온 6개' },

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { Actions, AppData } from '../App.tsx';
 import { STRATEGIES, backtest, labRecords, pickFor, summarize, type StrategyId } from '../lib/strategy.ts';
-import { LAB_SCORE_FROM, NEAR_EXPECTED, runLab } from '../lib/labpick.ts';
+import { LAB_SCORE_FROM, NEAR_EXPECTED, SHAPE_RULES, runLab, shapeChecks, shapeOf } from '../lib/labpick.ts';
 import { EXPECTED_MATCH } from '../lib/lotto.ts';
 import { currentSalesRound } from '../lib/schedule.ts';
 import { newId } from '../lib/store.ts';
@@ -84,6 +84,7 @@ export function Analysis({ data, actions }: { data: AppData; actions: Actions })
               </>
             )}
           </span>
+          {id === 'lab' && <ShapeList nums={picks} />}
           {id === 'lab' && <p className="notice" style={{ marginTop: 8 }}>+ 뒤의 번호는 보너스 후보예요. 내 기록에는 앞의 6개만 담겨요.</p>}
           <div className="actions" style={{ marginTop: 14 }}>
             <button type="button" className="btn ghost" onClick={savePick}>
@@ -249,6 +250,28 @@ export function Analysis({ data, actions }: { data: AppData; actions: Actions })
           </ul>
         </section>
       </div>
+    </div>
+  );
+}
+
+/** 실험실 픽 조합 모양: 조건 6가지와 이 조합의 실제 값 */
+function ShapeList({ nums }: { nums: number[] }) {
+  const sh = shapeOf(nums);
+  const ok = shapeChecks(sh);
+  const value = [`합계 ${sh.sum}`, `홀수 ${sh.odd}개`, `23 이상 ${sh.high}개`, `연번 ${sh.consec}쌍`, `AC값 ${sh.ac}`, `번호대 ${sh.bands}가지`];
+  return (
+    <div style={{ marginTop: 12 }}>
+      <ul className="shape-list" aria-label="조합 모양 조건">
+        {SHAPE_RULES.map((r, i) => (
+          <li key={r.id} className={ok[i] ? 'ok' : 'no'} title={r.name}>
+            <b>{value[i]}</b>
+            <span>기준 {r.range}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="notice" style={{ marginTop: 8 }}>
+        역대 당첨 조합에 가장 흔한 모양 6가지를 모두 갖췄어요. 당첨 1,251회 중 39%가 이 모양이었고, 전체 조합 중 38%가 이 모양이라 이 조건이 1등 확률을 바꾸지는 않아요.
+      </p>
     </div>
   );
 }

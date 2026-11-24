@@ -6,7 +6,8 @@ import { EXPECTED_MATCH, MATCH_VARIANCE, grade } from './lotto.ts';
  *
  * 매 회차 t마다 1회~(t−1)회 데이터만 써서
  *   1) 규칙마다 45개 번호에 점수를 매기고(0~1 백분위로 맞춤),
- *   2) 지금까지 각 규칙이 받은 가중치로 점수를 합쳐 상위 6개 + 7번째(보너스 후보)를 고른 뒤,
+ *   2) 지금까지 각 규칙이 받은 가중치로 점수를 합쳐, 조합 모양 조건 6가지를 모두 만족하는 조합 중
+ *      점수 합이 가장 큰 6개 + 7번째(보너스 후보)를 고른 뒤,
  *   3) t회 당첨번호 7개(보너스 포함)가 각 규칙에서 몇 백분위였는지로 규칙 성적을 매겨
  *      가중치를 곱셈 갱신(Hedge)한다.
  * 미래 정보는 쓰지 않는다(t회 채점은 t회 직전 상태로만). 무작위라면 규칙 성적은 0.5 근처.
@@ -131,9 +132,94 @@ class State {
   }
 }
 
+/** 조합 모양 조건 — 역대 당첨 조합에 가장 흔한 모양(전체 조합의 38.0%, 실제 당첨 1,251회 중 39.4%) */
+export const SHAPE_RULES = [
+  { id: 'sum', name: '합계 100~175', range: '100~175' },
+  { id: 'odd', name: '홀수 2~4개', range: '2~4개' },
+  { id: 'high', name: '23 이상 2~4개', range: '2~4개' },
+  { id: 'consec', name: '연번 1쌍 이하', range: '1쌍 이하' },
+  { id: 'ac', name: 'AC값 7 이상', range: '7 이상' },
+  { id: 'band', name: '번호대 3~4가지', range: '3~4가지' },
+] as const;
+
+export interface Shape {
+  sum: number;
+  odd: number;
+  high: number;
+  consec: number;
+  ac: number;
+  bands: number;
+}
+
+/** nums: 오름차순 6개 */
+export function shapeOf(nums: readonly number[]): Shape {
+  let sum = 0;
+  let odd = 0;
+  let high = 0;
+  let consec = 0;
+  const bandSet = new Set<number>();
+  for (let i = 0; i < 6; i++) {
+    const n = nums[i];
+    sum += n;
+    if (n % 2) odd++;
+    if (n >= 23) high++;
+    if (i && n - nums[i - 1] === 1) consec++;
+    bandSet.add(Math.floor((n - 1) / 10));
+  }
+  const diffs = new Set<number>();
+  for (let i = 0; i < 6; i++) for (let j = i + 1; j < 6; j++) diffs.add(nums[j] - nums[i]);
+  return { sum, odd, high, consec, ac: diffs.size - 5, bands: bandSet.size };
+}
+
+export function shapeChecks(s: Shape): boolean[] {
+  return [
+    s.sum >= 100 && s.sum <= 175,
+    s.odd >= 2 && s.odd <= 4,
+    s.high >= 2 && s.high <= 4,
+    s.consec <= 1,
+    s.ac >= 7,
+    s.bands >= 3 && s.bands <= 4,
+  ];
+}
+
+export const shapeOk = (nums: readonly number[]) => shapeChecks(shapeOf(nums)).every(Boolean);
+
+/**
+ * 점수 합이 가장 큰 6개 조합 중 모양 조건을 모두 만족하는 것 (분기 한정 탐색).
+ * 7번째(보너스 후보)는 그 6개를 뺀 최고 점수 번호.
+ */
 function pick(scores: Float64Array): { six: number[]; seventh: number } {
-  const ns = Array.from({ length: 45 }, (_, i) => i + 1).sort((a, b) => scores[b] - scores[a] || a - b);
-  return { six: ns.slice(0, 6).sort((a, b) => a - b), seventh: ns[6] };
+  const order = Array.from({ length: 45 }, (_, i) => i + 1).sort((a, b) => scores[b] - scores[a] || a - b);
+  const sc = order.map((n) => scores[n]);
+  let best: number[] | null = null;
+  let bestSum = -Infinity;
+  const cur: number[] = [];
+  const buf: number[] = new Array(6);
+  const rec = (start: number, acc: number) => {
+    const d = cur.length;
+    if (d === 6) {
+      for (let i = 0; i < 6; i++) buf[i] = order[cur[i]];
+      const sorted = buf.slice().sort((a, b) => a - b);
+      if (acc > bestSum && shapeOk(sorted)) {
+        bestSum = acc;
+        best = sorted;
+      }
+      return;
+    }
+    for (let i = start; i <= 45 - (6 - d); i++) {
+      // 남은 자리를 i부터 연속으로 채운 값이 상한 (점수 내림차순)
+      let bound = acc;
+      for (let k = 0; k < 6 - d; k++) bound += sc[i + k];
+      if (bound <= bestSum) break;
+      cur.push(i);
+      rec(i + 1, acc + sc[i]);
+      cur.pop();
+    }
+  };
+  rec(0, 0);
+  const six: number[] = best ?? order.slice(0, 6).sort((a, b) => a - b);
+  const seventh = order.find((n) => !six.includes(n))!;
+  return { six, seventh };
 }
 
 function combine(feats: Float64Array[], logW: Float64Array): Float64Array {

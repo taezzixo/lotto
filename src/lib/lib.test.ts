@@ -11,7 +11,7 @@ import { STRATEGIES, backtest, pickFor, randomPick, summarize } from './strategy
 import { addTicket, exportFile, mergeImport } from './store.ts';
 import { dateKo, won } from './format.ts';
 import { collectDecision } from './collect.ts';
-import { LAB_RULES, NEAR_EXPECTED, runLab } from './labpick.ts';
+import { LAB_RULES, NEAR_EXPECTED, runLab, shapeOf, shapeOk } from './labpick.ts';
 
 const draws: Draw[] = JSON.parse(readFileSync(new URL('../../public/data/draws.json', import.meta.url), 'utf8'));
 const byNo = new Map(draws.map((d) => [d.no, d]));
@@ -280,4 +280,15 @@ test('실험실 픽: 미래 정보 없이 매주 다시 계산, 다음 회차 7�
   assert.equal(full.weights.length, LAB_RULES.length);
   for (const w of full.weights) assert.ok(Math.abs(w.perf - 0.5) < 0.02, `${w.id} ${w.perf}`);
   assert.ok(NEAR_EXPECTED > 1.08 && NEAR_EXPECTED < 1.09);
+});
+
+test('실험실 픽: 조합 모양 조건 6가지', () => {
+  // 13·16·18·19·38·42: 합계 146, 홀수 2, 23 이상 2, 연번 1쌍, 번호대 3가지
+  const sh = shapeOf([13, 16, 18, 19, 38, 42]);
+  assert.deepEqual([sh.sum, sh.odd, sh.high, sh.consec, sh.bands], [146, 2, 2, 1, 3]);
+  assert.equal(shapeOf([1, 2, 3, 4, 5, 6]).ac, 0);
+  assert.equal(shapeOk([1, 2, 3, 4, 5, 6]), false);
+  const full = runLab(draws);
+  assert.ok(shapeOk(full.next.picks));
+  assert.ok(full.weeks.every((w) => shapeOk(w.picks)), '매주 고른 조합이 모두 모양 조건 충족');
 });
